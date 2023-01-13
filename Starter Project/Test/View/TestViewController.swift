@@ -10,7 +10,7 @@ import Combine
 import SwiftUI
 import UIKit
 
-struct TestView: UIViewControllerRepresentable {
+struct UIKitTestView: UIViewControllerRepresentable {
     typealias UIViewControllerType = TestViewController
     
     func makeUIViewController(context: Context) -> TestViewController {
@@ -31,7 +31,6 @@ class TestViewController: UIViewController {
         button.setTitle("+", for: .normal)
         button.backgroundColor = .systemBackground.withAlphaComponent(0.5)
         button.setContentHuggingPriority(.required, for: .vertical)
-        button.addTarget(self, action: #selector(increaseTapped), for: .touchUpInside)
         return button
     }()
     
@@ -41,7 +40,6 @@ class TestViewController: UIViewController {
         button.setTitle("-", for: .normal)
         button.backgroundColor = .systemBackground.withAlphaComponent(0.5)
         button.setContentHuggingPriority(.required, for: .vertical)
-        button.addTarget(self, action: #selector(decreaseTapped), for: .touchUpInside)
         return button
     }()
     
@@ -50,8 +48,6 @@ class TestViewController: UIViewController {
         label.translatesAutoresizingMaskIntoConstraints = false
         label.font = UIFont.preferredFont(forTextStyle: .title1)
         label.textAlignment = .center
-        label.text = "0"
-        
         return label
     }()
     
@@ -79,16 +75,18 @@ class TestViewController: UIViewController {
     }
     
     private func bindViews() {
-        viewModel.currentValue.map { "Value: \($0)"}.sink { [weak self] text in
+        plusButton.tapPublisher.print("Plus").sink { [weak self] _ in
+            self?.viewModel.increase()
+        }.store(in: &cancellables)
+        
+        minusButton.tapPublisher.print("Minus").sink { [weak self] _ in
+            self?.viewModel.decrease()
+        }.store(in: &cancellables)
+        
+        viewModel.currentValue
+            .map { "\($0)" }
+            .sink { [weak self] text in
             self?.currentValueLabel.text = text
         }.store(in: &cancellables)
-    }
-    
-    @objc private func increaseTapped() {
-        viewModel.buttonEvents.send(.increase)
-    }
-    
-    @objc private func decreaseTapped() {
-        viewModel.buttonEvents.send(.decrease)
     }
 }
