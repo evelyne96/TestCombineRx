@@ -9,18 +9,13 @@ import Foundation
 import Combine
 
 class TestViewModel {
-    private(set) var value: Int = 0 {
-        didSet {
-            currentValue.send(value)
-        }
-    }
     let currentValue = CurrentValueSubject<Int, Never>(0)
     
     func increase() {
-        value += 1
+        currentValue.send(currentValue.value + 1)
     }
     
     func decrease() {
-        value -= 1
+        currentValue.send(currentValue.value - 1)
     }
 }
