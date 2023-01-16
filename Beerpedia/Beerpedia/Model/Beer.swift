@@ -13,7 +13,7 @@ struct Beer: Codable {
     let tagline: String
     let firstBrewed: String
     let description: String
-    let imageURL: String?
+    let imageUrl: String?
     let abv: Double?
     let ibu: Double?
     let targetFG: Double?
