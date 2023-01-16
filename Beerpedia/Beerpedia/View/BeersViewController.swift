@@ -39,10 +39,13 @@ class BeersViewController: UIViewController {
             guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: Self.cellID, for: indexPath) as? Cell else {
                 return UICollectionViewCell()
             }
-            // TODO: configure
+            cell.configure(with: item)
             return cell
         }
     }()
+    
+    private var subscriptions = Set<AnyCancellable>()
+    private var viewModel = BeerListViewModel()
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -56,5 +59,26 @@ class BeersViewController: UIViewController {
             collectionView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             collectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
         ])
+        
+        bindViewModel()
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        
+        self.viewModel.viewEvent.send(.onAppear)
+    }
+    
+    private func bindViewModel() {
+        viewModel.beers.sink { [weak self] beers in
+            self?.didLoad(beers: beers)
+        }.store(in: &subscriptions)
+    }
+    
+    private func didLoad(beers: [CellData]) {
+        var snapshot = NSDiffableDataSourceSnapshot<Section, CellData>()
+        snapshot.appendSections(Section.allCases)
+        snapshot.appendItems(beers, toSection: .beers)
+        dataSource.apply(snapshot)
     }
 }

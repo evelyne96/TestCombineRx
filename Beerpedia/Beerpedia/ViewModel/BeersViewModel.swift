@@ -8,13 +8,29 @@
 import Combine
 import Foundation
 
-class BeerListViewModel: ObservableObject {
-    private let apiClient = BeerAPIClient()
-    private var cancellables = Set<AnyCancellable>()
-    var beers: [Beer] = []
+enum ViewEvent {
+    case onAppear
+}
+
+class BeerListViewModel {
+    private let apiClient: BeerAPIClient
+    private var subscriptions = Set<AnyCancellable>()
     
-    func loadBeers() {
-        cancellables.cancelAll()
+    private(set) var viewEvent = PassthroughSubject<ViewEvent, Never>()
+    let beers = CurrentValueSubject<[BeerViewModel], Never>([])
+    
+    init(apiClient: BeerAPIClient = BeerAPIClient()) {
+        self.apiClient = apiClient
+                
+        viewEvent.filter { $0 == .onAppear }
+            .sink { [weak self] _ in
+                self?.loadBeers()
+            }
+            .store(in: &subscriptions)
+    }
+    
+    private func loadBeers() {
+        subscriptions.cancelAll()
         
         apiClient.getBeers()
             .receive(on: DispatchQueue.main)
@@ -23,13 +39,20 @@ class BeerListViewModel: ObservableObject {
                     debugPrint(error)
                 }
             }, receiveValue: { [weak self] in
-                self?.beers = $0
+                let viewModels = $0.mapToBeerViewModel()
+                self?.beers.send(viewModels)
             })
-            .store(in: &cancellables)
+            .store(in: &subscriptions)
     }
 }
 
-private extension Set where Element == AnyCancellable {
+extension Array where Element == Beer {
+    func mapToBeerViewModel() -> [BeerViewModel] {
+        map { BeerViewModel(beer: $0) }
+    }
+}
+
+extension Set where Element == AnyCancellable {
     mutating func cancelAll() {
         forEach { $0.cancel() }
         removeAll()

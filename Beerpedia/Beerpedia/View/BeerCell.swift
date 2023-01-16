@@ -62,4 +62,16 @@ class BeerCell: UICollectionViewCell {
         imageView.image = nil
         label.text = nil
     }
+    
+    func configure(with viewModel: BeerViewModel) {
+        imageView.image = viewModel.image.value
+        label.text = viewModel.name
+        
+        viewModel.image
+            .sink { [weak self] in
+                self?.imageView.image = $0
+            }.store(in: &subscriptions)
+        
+        viewModel.viewEvent.send(.onAppear)
+    }
 }
