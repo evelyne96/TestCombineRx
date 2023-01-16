@@ -8,12 +8,16 @@
 import SwiftUI
 
 struct ContentView: View {
+    let vm = BeerListViewModel()
+    
     var body: some View {
         VStack {
             Image(systemName: "globe")
                 .imageScale(.large)
                 .foregroundColor(.accentColor)
             Text("Hello, world!")
+        }.onAppear {
+            vm.loadBeers()
         }
         .padding()
     }
