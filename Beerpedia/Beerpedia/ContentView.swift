@@ -22,5 +22,15 @@ struct ContentView: View {
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
         ContentView()
+            .previewDevice(Devices.iPhone14.preview)
+            .previewDisplayName(Devices.iPhone14.name)
+        
+        ContentView()
+            .previewDevice(Devices.iPhone14ProMax.preview)
+            .previewDisplayName(Devices.iPhone14ProMax.name)
+        
+        ContentView()
+            .previewDevice(Devices.iPadMini.preview)
+            .previewDisplayName(Devices.iPadMini.name)
     }
 }
