@@ -21,28 +21,23 @@ class BeerListViewModel {
     
     init(apiClient: BeerAPIClient = BeerAPIClient()) {
         self.apiClient = apiClient
-                
-        viewEvent.filter { $0 == .onAppear }
-            .sink { [weak self] _ in
-                self?.loadBeers()
-            }
-            .store(in: &subscriptions)
-    }
-    
-    private func loadBeers() {
-        subscriptions.cancelAll()
         
-        apiClient.getBeers()
+        viewEvent
+            .filter { $0 == .onAppear }
+            .loadBeers(apiClient: apiClient)
             .receive(on: DispatchQueue.main)
-            .sink(receiveCompletion: {
-                if case .failure(let error) = $0 {
-                    debugPrint(error)
-                }
-            }, receiveValue: { [weak self] in
+            .sink { [weak self] in
                 let viewModels = $0.mapToBeerViewModel()
                 self?.beers.send(viewModels)
-            })
-            .store(in: &subscriptions)
+            }.store(in: &subscriptions)
+    }
+}
+
+private extension Publisher {
+    func loadBeers(apiClient: BeerAPIClient) -> AnyPublisher<[Beer], Never> {
+        apiClient.getBeers()
+            .replaceError(with: [])
+            .eraseToAnyPublisher()
     }
 }
 
