@@ -38,7 +38,17 @@ class BeersViewController: UIViewController {
     }()
     
     private var subscriptions = Set<AnyCancellable>()
-    private var viewModel = BeerListViewModel()
+    private(set) var viewModel: BeersViewModel
+    weak var coordinator: Coordinator?
+    
+    init(viewModel: BeersViewModel) {
+        self.viewModel = viewModel
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
     
     override func viewDidLoad() {
         super.viewDidLoad()

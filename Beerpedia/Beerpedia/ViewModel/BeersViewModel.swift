@@ -13,16 +13,23 @@ enum ViewEvent: Equatable {
     case didSelect(_ indexPath: IndexPath)
 }
 
-class BeerListViewModel {
+class BeersViewModel {
     private let apiClient: BeerAPIClient
+    private let coordinator: AppCoordinator
     private var subscriptions = Set<AnyCancellable>()
     
     private(set) var viewEvent = PassthroughSubject<ViewEvent, Never>()
     let beers = CurrentValueSubject<[BeerViewModel], Never>([])
     
-    init(apiClient: BeerAPIClient = BeerAPIClient()) {
+    init(apiClient: BeerAPIClient = BeerAPIClient(),
+         coordinator: AppCoordinator = AppCoordinator()) {
         self.apiClient = apiClient
+        self.coordinator = coordinator
         
+        createSubscrioptions()
+    }
+    
+    private func createSubscrioptions() {
         viewEvent
             .filter { $0 == .onAppear }
             .loadBeers(apiClient: apiClient)
@@ -32,10 +39,12 @@ class BeerListViewModel {
                 self?.beers.send(viewModels)
             }.store(in: &subscriptions)
         
-        viewEvent.sink {
+        viewEvent.sink { [weak self] in
+            guard let self = self else { return }
             switch $0 {
             case .didSelect(let index):
-                debugPrint("index: \(index)")
+                let viewModel = self.beers.value[index.row]
+                self.coordinator.showDetailsFor(viewModel: viewModel)
             default:
                 break
             }
