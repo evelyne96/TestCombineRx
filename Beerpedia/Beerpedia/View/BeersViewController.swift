@@ -53,6 +53,8 @@ class BeersViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        title = "Beers"
+        view.backgroundColor = .systemBackground
         collectionView.register(Cell.self, forCellWithReuseIdentifier: Self.cellID)
         collectionView.dataSource = dataSource
         collectionView.delegate = self

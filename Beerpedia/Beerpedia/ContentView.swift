@@ -12,7 +12,7 @@ struct UIKitContentView: UIViewControllerRepresentable {
     typealias UIViewControllerType = BeersViewController
     
     func makeUIViewController(context: Context) -> UIViewControllerType {
-        .init(nibName: nil, bundle: nil)
+        .init(viewModel: BeersViewModel())
     }
     
     func updateUIViewController(_ uiViewController: UIViewControllerType, context: Context) { }

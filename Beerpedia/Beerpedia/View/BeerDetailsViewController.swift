@@ -10,6 +10,10 @@ import Foundation
 import UIKit
 
 class BeerDetailsViewController: UIViewController {
+    private enum UIConstants {
+        static var spacing: CGFloat = 16
+    }
+    
     private let viewModel: BeerViewModel
     private var cancellables = Set<AnyCancellable>()
     private lazy var imageView: UIImageView = {
@@ -24,6 +28,8 @@ class BeerDetailsViewController: UIViewController {
         label.translatesAutoresizingMaskIntoConstraints = false
         label.font = UIFont.preferredFont(forTextStyle: .title1)
         label.textAlignment = .center
+        label.numberOfLines = 0
+        label.setContentCompressionResistancePriority(.required, for: .vertical)
         return label
     }()
     
@@ -38,10 +44,13 @@ class BeerDetailsViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+        view.backgroundColor = .systemBackground
         let contentStack = UIStackView(arrangedSubviews: [imageView, descriptionLabel])
         contentStack.translatesAutoresizingMaskIntoConstraints = false
         contentStack.axis = .vertical
+        contentStack.spacing = UIConstants.spacing
+        contentStack.isLayoutMarginsRelativeArrangement = true
+        contentStack.layoutMargins = UIEdgeInsets(uniform: UIConstants.spacing)
         view.addSubview(contentStack)
         
         NSLayoutConstraint.activate([
