@@ -10,13 +10,6 @@ import Foundation
 import SwiftUI
 import UIKit
 
-struct UIKitBeersView: UIViewControllerRepresentable {
-    typealias UIViewControllerType = BeersViewController
-    
-    func makeUIViewController(context: Context) -> UIViewControllerType { .init() }    
-    func updateUIViewController(_ uiViewController: UIViewControllerType, context: Context) { }
-}
-
 class BeersViewController: UIViewController {
     typealias Cell = BeerCell
     typealias CellData = BeerViewModel
