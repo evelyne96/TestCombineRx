@@ -8,8 +8,9 @@
 import Combine
 import Foundation
 
-enum ViewEvent {
+enum ViewEvent: Equatable {
     case onAppear
+    case didSelect(_ indexPath: IndexPath)
 }
 
 class BeerListViewModel {
@@ -30,6 +31,15 @@ class BeerListViewModel {
                 let viewModels = $0.mapToBeerViewModel()
                 self?.beers.send(viewModels)
             }.store(in: &subscriptions)
+        
+        viewEvent.sink {
+            switch $0 {
+            case .didSelect(let index):
+                debugPrint("index: \(index)")
+            default:
+                break
+            }
+        }.store(in: &subscriptions)
     }
 }
 

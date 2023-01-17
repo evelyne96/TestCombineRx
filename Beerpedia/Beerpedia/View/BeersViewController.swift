@@ -37,7 +37,7 @@ class BeersViewController: UIViewController {
     private lazy var dataSource: UICollectionViewDiffableDataSource = {
         UICollectionViewDiffableDataSource<Section, CellData>(collectionView: collectionView) { collectionView, indexPath, item in
             guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: Self.cellID, for: indexPath) as? Cell else {
-                return UICollectionViewCell()
+                return .init()
             }
             cell.configure(with: item)
             return cell
@@ -52,6 +52,7 @@ class BeersViewController: UIViewController {
         
         collectionView.register(Cell.self, forCellWithReuseIdentifier: Self.cellID)
         collectionView.dataSource = dataSource
+        collectionView.delegate = self
         
         NSLayoutConstraint.activate([
             collectionView.topAnchor.constraint(equalTo: view.topAnchor),
@@ -66,7 +67,7 @@ class BeersViewController: UIViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         
-        self.viewModel.viewEvent.send(.onAppear)
+        viewModel.viewEvent.send(.onAppear)
     }
     
     private func bindViewModel() {
@@ -80,5 +81,11 @@ class BeersViewController: UIViewController {
         snapshot.appendSections(Section.allCases)
         snapshot.appendItems(beers, toSection: .beers)
         dataSource.apply(snapshot)
+    }
+}
+
+extension BeersViewController: UICollectionViewDelegate {
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        viewModel.viewEvent.send(.didSelect(indexPath))
     }
 }

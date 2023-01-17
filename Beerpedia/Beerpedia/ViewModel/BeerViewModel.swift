@@ -25,12 +25,10 @@ class BeerViewModel {
         self.apiClient = apiClient
         self.beer = beer
         
-        viewEvent.sink { [weak self] event in
-            switch event {
-            case .onAppear:
+        viewEvent.filter{ $0 == .onAppear}
+            .sink { [weak self] _ in
                 self?.loadImage()
-            }
-        }.store(in: &subscriptions)
+            }.store(in: &subscriptions)
     }
     
     private func loadImage() {
