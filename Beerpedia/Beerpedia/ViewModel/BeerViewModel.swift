@@ -49,6 +49,7 @@ class BeerViewModel {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] in
                 self?.image.send($0)
+                self?.isDownloading.send(false)
             }
             .store(in: &subscriptions)
     }
