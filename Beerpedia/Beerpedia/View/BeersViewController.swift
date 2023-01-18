@@ -21,7 +21,6 @@ class BeersViewController: UIViewController {
     typealias Cell = BeerCell
     typealias CellData = BeerViewModel
     
-    private static let cellID = "beerCell"
     private enum Section: CaseIterable {
         case beers
     }
@@ -36,7 +35,7 @@ class BeersViewController: UIViewController {
     
     private lazy var dataSource: UICollectionViewDiffableDataSource = {
         UICollectionViewDiffableDataSource<Section, CellData>(collectionView: collectionView) { collectionView, indexPath, item in
-            guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: Self.cellID, for: indexPath) as? Cell else {
+            guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: Cell.reuseID, for: indexPath) as? Cell else {
                 return UICollectionViewCell()
             }
             cell.configure(with: item)
@@ -50,7 +49,7 @@ class BeersViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        collectionView.register(Cell.self, forCellWithReuseIdentifier: Self.cellID)
+        collectionView.register(Cell.self, forCellWithReuseIdentifier: Cell.reuseID)
         collectionView.dataSource = dataSource
         
         NSLayoutConstraint.activate([
