@@ -12,6 +12,7 @@ enum APIError: Error {
     case unknown
     case invalidRequest
     case invalidData
+    case invalidResponse
     case serverError(_ error: String)
     case decodingError(_ error: String)
 }
@@ -31,11 +32,9 @@ extension APIClient {
         
         return urlSession.dataTaskPublisher(for: url)
             .tryMap { data, urlResponse in
+                guard let httpResponse = urlResponse as? HTTPURLResponse else { throw APIError.invalidResponse }
+                guard (200..<300).contains(httpResponse.statusCode) else { throw APIError.serverError(httpResponse.statusCode.description) }
                 guard !data.isEmpty else { throw APIError.invalidData }
-                if let httpResponse = urlResponse as? HTTPURLResponse,
-                    !(200..<300).contains(httpResponse.statusCode) {
-                    throw APIError.serverError(httpResponse.statusCode.description)
-                }
                 
                 return data
             }
