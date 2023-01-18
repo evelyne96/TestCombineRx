@@ -79,11 +79,11 @@ class BeersViewController: UIViewController {
     
     private func bindViewModel() {
         viewModel.beers.sink { [weak self] beers in
-            self?.didLoad(beers: beers)
+            self?.refreshBeers(beers)
         }.store(in: &subscriptions)
     }
     
-    private func didLoad(beers: [CellData]) {
+    private func refreshBeers(_ beers: [CellData]) {
         var snapshot = NSDiffableDataSourceSnapshot<Section, CellData>()
         snapshot.appendSections(Section.allCases)
         snapshot.appendItems(beers, toSection: .beers)
