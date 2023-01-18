@@ -9,8 +9,8 @@ import Foundation
 import Combine
 
 enum BeerEnpoints: String {
-    static let baseURL = URL(string: "https://api.punkapi.com/v2")!
-    var url: URL { Self.baseURL.appending(path: rawValue) }
+    static let baseURL = URL(string: "https://api.punkapi.com/v2")
+    var url: URL? { Self.baseURL?.appending(path: rawValue) }
     
     case beers = "beers"
 }

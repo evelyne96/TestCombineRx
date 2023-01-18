@@ -10,6 +10,7 @@ import Combine
 
 enum APIError: Error {
     case unknown
+    case invalidRequest
     case invalidData
     case serverError(_ error: String)
     case decodingError(_ error: String)
@@ -18,12 +19,16 @@ enum APIError: Error {
 protocol APIClient {
     var urlSession: URLSession { get }
     
-    func getData(url: URL) -> AnyPublisher<Data, APIError>
-    func get<T: Decodable>(url: URL, decoder: JSONDecoder) -> AnyPublisher<T, APIError>
+    func getData(url: URL?) -> AnyPublisher<Data, APIError>
+    func get<T: Decodable>(url: URL?, decoder: JSONDecoder) -> AnyPublisher<T, APIError>
 }
 
 extension APIClient {
-    func getData(url: URL) -> AnyPublisher<Data, APIError> {
+    func getData(url: URL?) -> AnyPublisher<Data, APIError> {
+        guard let url = url else {
+            return Fail(error: APIError.invalidRequest).eraseToAnyPublisher()
+        }
+        
         return urlSession.dataTaskPublisher(for: url)
             .tryMap { data, urlResponse in
                 guard !data.isEmpty else { throw APIError.invalidData }
@@ -38,10 +43,10 @@ extension APIClient {
             .eraseToAnyPublisher()
     }
     
-    func get<T: Decodable>(url: URL, decoder: JSONDecoder) -> AnyPublisher<T, APIError> {
+    func get<T: Decodable>(url: URL?, decoder: JSONDecoder) -> AnyPublisher<T, APIError> {
         return getData(url: url)
             .decode(type: T.self, decoder: decoder)
-            .mapError{ APIError.decodingError($0.localizedDescription) }
+            .mapError{ $0 as? APIError ?? APIError.decodingError($0.localizedDescription) }
             .eraseToAnyPublisher()
     }
 }
