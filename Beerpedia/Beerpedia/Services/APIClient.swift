@@ -16,7 +16,7 @@ enum APIError: Error {
 }
 
 protocol APIClient {
-    var urlSession: URLSession! { get }
+    var urlSession: URLSession { get }
     
     func getData(url: URL) -> AnyPublisher<Data, APIError>
     func get<T: Decodable>(url: URL, decoder: JSONDecoder) -> AnyPublisher<T, APIError>

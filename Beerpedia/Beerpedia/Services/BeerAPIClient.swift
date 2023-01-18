@@ -16,7 +16,7 @@ enum BeerEnpoints: String {
 }
 
 class BeerAPIClient: APIClient {
-    let urlSession: URLSession!
+    let urlSession: URLSession
     init(urlSession: URLSession = .shared) {
         self.urlSession = urlSession
     }
