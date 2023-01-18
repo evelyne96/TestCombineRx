@@ -59,6 +59,8 @@ final class BeerCell: UICollectionViewCell, ReusableView {
     
     override func prepareForReuse() {
         super.prepareForReuse()
+        subscriptions.cancelAll()
+        
         imageView.image = nil
         label.text = nil
     }
