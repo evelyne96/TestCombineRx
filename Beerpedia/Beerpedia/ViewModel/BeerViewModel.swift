@@ -9,7 +9,7 @@ import Combine
 import Foundation
 import UIKit
 
-class BeerViewModel {
+final class BeerViewModel {
     private let apiClient: BeerAPIClient
     private var subscriptions = Set<AnyCancellable>()
     private let beer: Beer

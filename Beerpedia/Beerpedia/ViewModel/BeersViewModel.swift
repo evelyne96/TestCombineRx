@@ -12,7 +12,7 @@ enum ViewEvent {
     case onAppear
 }
 
-class BeerListViewModel {
+final class BeerListViewModel {
     private let apiClient: BeerAPIClient
     private var subscriptions = Set<AnyCancellable>()
     

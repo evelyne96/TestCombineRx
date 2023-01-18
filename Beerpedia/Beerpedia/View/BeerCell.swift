@@ -9,7 +9,7 @@ import Combine
 import Foundation
 import UIKit
 
-class BeerCell: UICollectionViewCell {
+final class BeerCell: UICollectionViewCell, ReusableView {
     private enum UIConstants {
         static var spacing: CGFloat = 8
     }
