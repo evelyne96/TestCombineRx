@@ -19,6 +19,8 @@ class BeerViewModel {
     private(set) var isDownloading = CurrentValueSubject<Bool, Never>(false)
     
     var name: String { beer.name }
+    var firstBrewed: String { beer.firstBrewed }
+    var contributedBy: String { beer.contributedBy ?? "" }
     
     init(beer: Beer,
          apiClient: BeerAPIClient = BeerAPIClient()) {

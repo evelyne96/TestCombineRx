@@ -21,7 +21,21 @@ class BeerCell: UICollectionViewCell {
         return imageView
     }()
     
-    private lazy var label: UILabel = {
+    private lazy var name: UILabel = {
+        let label = UILabel()
+        label.numberOfLines = 0
+        label.font = .preferredFont(forTextStyle: .title1)
+        return label
+    }()
+    
+    private lazy var firstBrewed: UILabel = {
+        let label = UILabel()
+        label.numberOfLines = 0
+        label.font = .preferredFont(forTextStyle: .title1)
+        return label
+    }()
+    
+    private lazy var contributed: UILabel = {
         let label = UILabel()
         label.numberOfLines = 0
         label.font = .preferredFont(forTextStyle: .title1)
@@ -33,7 +47,14 @@ class BeerCell: UICollectionViewCell {
     override init(frame: CGRect) {
         super.init(frame: frame)
         
-        let contentStack = UIStackView(arrangedSubviews: [imageView, label])
+        let labelStack = UIStackView(arrangedSubviews: [name, firstBrewed, contributed])
+        labelStack.axis  = .vertical
+        labelStack.alignment = .leading
+        labelStack.spacing = UIConstants.spacing
+        labelStack.isLayoutMarginsRelativeArrangement = true
+        labelStack.layoutMargins = UIEdgeInsets(uniform: UIConstants.spacing)
+        
+        let contentStack = UIStackView(arrangedSubviews: [imageView, labelStack])
         contentStack.axis  = .horizontal
         contentStack.alignment = .center
         contentStack.spacing = UIConstants.spacing
@@ -60,12 +81,14 @@ class BeerCell: UICollectionViewCell {
     override func prepareForReuse() {
         super.prepareForReuse()
         imageView.image = nil
-        label.text = nil
+        name.text = nil
     }
     
     func configure(with viewModel: BeerViewModel) {
         imageView.image = viewModel.image.value
-        label.text = viewModel.name
+        name.text = viewModel.name
+        firstBrewed.text = viewModel.firstBrewed
+        contributed.text = viewModel.contributedBy
         
         viewModel.image
             .sink { [weak self] in
