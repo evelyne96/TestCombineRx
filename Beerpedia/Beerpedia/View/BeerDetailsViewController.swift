@@ -23,12 +23,26 @@ class BeerDetailsViewController: UIViewController {
         return image
     }()
 
-    private lazy var descriptionLabel: UILabel = {
+    private lazy var name: UILabel = {
         let label = UILabel()
-        label.translatesAutoresizingMaskIntoConstraints = false
-        label.font = UIFont.preferredFont(forTextStyle: .title1)
-        label.textAlignment = .center
         label.numberOfLines = 0
+        label.font = .preferredFont(forTextStyle: .title1)
+        label.setContentCompressionResistancePriority(.required, for: .vertical)
+        return label
+    }()
+    
+    private lazy var firstBrewed: UILabel = {
+        let label = UILabel()
+        label.numberOfLines = 0
+        label.font = .preferredFont(forTextStyle: .body)
+        label.setContentCompressionResistancePriority(.required, for: .vertical)
+        return label
+    }()
+    
+    private lazy var contributed: UILabel = {
+        let label = UILabel()
+        label.numberOfLines = 0
+        label.font = .preferredFont(forTextStyle: .body)
         label.setContentCompressionResistancePriority(.required, for: .vertical)
         return label
     }()
@@ -45,7 +59,14 @@ class BeerDetailsViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
-        let contentStack = UIStackView(arrangedSubviews: [imageView, descriptionLabel])
+        let labelStack = UIStackView(arrangedSubviews: [name, firstBrewed, contributed])
+        labelStack.axis  = .vertical
+        labelStack.alignment = .center
+        labelStack.spacing = UIConstants.spacing
+        labelStack.isLayoutMarginsRelativeArrangement = true
+        labelStack.layoutMargins = UIEdgeInsets(uniform: UIConstants.spacing)
+        
+        let contentStack = UIStackView(arrangedSubviews: [imageView, labelStack])
         contentStack.translatesAutoresizingMaskIntoConstraints = false
         contentStack.axis = .vertical
         contentStack.spacing = UIConstants.spacing
@@ -70,7 +91,9 @@ class BeerDetailsViewController: UIViewController {
     
     private func bindViews() {
         imageView.image = viewModel.image.value
-        descriptionLabel.text = viewModel.name
+        name.text = viewModel.name
+        firstBrewed.text = viewModel.firstBrewed
+        contributed.text = viewModel.contributedBy
         
         viewModel.image.sink { [weak self] in
             self?.imageView.image = $0
