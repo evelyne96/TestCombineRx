@@ -50,9 +50,6 @@ final class BeerCell: UICollectionViewCell, ReusableView {
         let labelStack = UIStackView(arrangedSubviews: [name, firstBrewed, contributed])
         labelStack.axis  = .vertical
         labelStack.alignment = .leading
-        labelStack.spacing = UIConstants.spacing
-        labelStack.isLayoutMarginsRelativeArrangement = true
-        labelStack.layoutMargins = UIEdgeInsets(uniform: UIConstants.spacing)
         
         let contentStack = UIStackView(arrangedSubviews: [imageView, labelStack])
         contentStack.axis  = .horizontal

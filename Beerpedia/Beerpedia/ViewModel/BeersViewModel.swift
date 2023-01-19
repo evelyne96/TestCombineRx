@@ -30,6 +30,7 @@ final class BeersViewModel {
     private(set) var isLoading = CurrentValueSubject<Bool, Never>(false)
     private(set) var error = CurrentValueSubject<String?, Never>(nil)
     private(set) var beers = CurrentValueSubject<[BeerViewModel], Never>([])
+    let title: String = "Beers"
     
     init(apiClient: BeerAPIClient = BeerAPIClient(),
          coordinator: AppCoordinator = AppCoordinator()) {
@@ -43,6 +44,7 @@ final class BeersViewModel {
         viewEvent
             .filter { $0 == .onAppear }
             .flatMap { [weak self] _ in
+                
                 self?.state.send(.loading(state: true))
                 return self?.apiClient.getBeers() ?? Fail(outputType: [Beer].self, failure: APIError.unknown).eraseToAnyPublisher()
             }
