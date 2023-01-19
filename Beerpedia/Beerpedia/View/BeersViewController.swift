@@ -95,13 +95,14 @@ class BeersViewController: UIViewController {
     }
     
     private func bindViewModel() {
-        viewModel.error.sink { [weak self] in
-            self?.errorLabel.text = $0
-        }.store(in: &subscriptions)
+        viewModel.error
+            .assign(to: \.text, on: errorLabel)
+            .store(in: &subscriptions)
         
-        viewModel.isLoading.print("Loading").sink { [weak self] in
-            self?.activityIndicator.isHidden = !$0
-        }.store(in: &subscriptions)
+        viewModel.isLoading
+            .map { !$0 }
+            .assign(to: \.isHidden, on: activityIndicator)
+            .store(in: &subscriptions)
         
         viewModel.beers.sink { [weak self] in
             self?.refreshBeers($0)

@@ -81,6 +81,8 @@ final class BeerCell: UICollectionViewCell, ReusableView {
         
         imageView.image = nil
         name.text = nil
+        firstBrewed.text = nil
+        contributed.text = nil
     }
     
     func configure(with viewModel: BeerViewModel) {
@@ -90,9 +92,8 @@ final class BeerCell: UICollectionViewCell, ReusableView {
         contributed.text = viewModel.contributedBy
         
         viewModel.image
-            .sink { [weak self] in
-                self?.imageView.image = $0
-            }.store(in: &subscriptions)
+            .assign(to: \.image, on: imageView)
+            .store(in: &subscriptions)
         
         viewModel.viewEvent.send(.onLoaded)
     }

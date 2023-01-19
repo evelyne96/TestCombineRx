@@ -90,8 +90,8 @@ class BeerDetailsViewController: UIViewController {
         firstBrewed.text = viewModel.firstBrewed
         contributed.text = viewModel.contributedBy
         
-        viewModel.image.sink { [weak self] in
-            self?.imageView.image = $0
-        }.store(in: &cancellables)
+        viewModel.image
+            .assign(to: \.image, on: imageView)
+            .store(in: &cancellables)
     }
 }
