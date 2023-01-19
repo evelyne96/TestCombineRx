@@ -43,7 +43,6 @@ final class BeerViewModel {
         subscriptions.cancelAll()
         isDownloading.send(true)
         apiClient.getImage(url: url)
-            .print("img")
             .map { UIImage(data: $0) }
             .replaceError(with: nil)
             .receive(on: DispatchQueue.main)

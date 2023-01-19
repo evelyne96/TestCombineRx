@@ -33,6 +33,17 @@ class BeersViewController: UIViewController {
         return collectionView
     }()
     
+    private lazy var errorLabel: UILabel = {
+        let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.numberOfLines = 0
+        label.textAlignment = .center
+        label.font = .preferredFont(forTextStyle: .title1)
+        label.textColor = .secondaryLabel
+        view.addSubview(label)
+        return label
+    }()
+    
     private lazy var dataSource: UICollectionViewDiffableDataSource = {
         UICollectionViewDiffableDataSource<Section, CellData>(collectionView: collectionView) { collectionView, indexPath, item in
             guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: Cell.reuseID, for: indexPath) as? Cell else {
@@ -41,6 +52,14 @@ class BeersViewController: UIViewController {
             cell.configure(with: item)
             return cell
         }
+    }()
+    
+    private lazy var activityIndicator: UIActivityIndicatorView = {
+        let activity = UIActivityIndicatorView(style: .large)
+        activity.translatesAutoresizingMaskIntoConstraints = false
+        activity.isHidden = true
+        view.addSubview(activity)
+        return activity
     }()
     
     private var subscriptions = Set<AnyCancellable>()
@@ -66,6 +85,12 @@ class BeersViewController: UIViewController {
             collectionView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             collectionView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             collectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            
+            errorLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            errorLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            
+            activityIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            activityIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor),
         ])
         
         bindViewModel()
@@ -78,8 +103,16 @@ class BeersViewController: UIViewController {
     }
     
     private func bindViewModel() {
-        viewModel.beers.sink { [weak self] beers in
-            self?.refreshBeers(beers)
+        viewModel.error.sink { [weak self] in
+            self?.errorLabel.text = $0
+        }.store(in: &subscriptions)
+        
+        viewModel.isLoading.print("Loading").sink { [weak self] in
+            self?.activityIndicator.isHidden = !$0
+        }.store(in: &subscriptions)
+        
+        viewModel.beers.sink { [weak self] in
+            self?.refreshBeers($0)
         }.store(in: &subscriptions)
     }
     
