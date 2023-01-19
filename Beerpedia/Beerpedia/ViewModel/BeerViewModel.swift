@@ -9,7 +9,7 @@ import Combine
 import Foundation
 import UIKit
 
-class BeerViewModel {
+final class BeerViewModel {
     private let apiClient: BeerAPIClient
     private var subscriptions = Set<AnyCancellable>()
     private let beer: Beer
@@ -43,7 +43,6 @@ class BeerViewModel {
         subscriptions.cancelAll()
         isDownloading.send(true)
         apiClient.getImage(url: url)
-            .print("img")
             .map { UIImage(data: $0) }
             .replaceError(with: nil)
             .receive(on: DispatchQueue.main)

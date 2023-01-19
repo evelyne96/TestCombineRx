@@ -9,7 +9,7 @@ import Combine
 import Foundation
 import UIKit
 
-class BeerCell: UICollectionViewCell {
+final class BeerCell: UICollectionViewCell, ReusableView {
     private enum UIConstants {
         static var spacing: CGFloat = 8
     }
@@ -80,6 +80,8 @@ class BeerCell: UICollectionViewCell {
     
     override func prepareForReuse() {
         super.prepareForReuse()
+        subscriptions.cancelAll()
+        
         imageView.image = nil
         name.text = nil
     }

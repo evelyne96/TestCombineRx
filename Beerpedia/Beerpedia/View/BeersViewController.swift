@@ -14,7 +14,6 @@ class BeersViewController: UIViewController {
     typealias Cell = BeerCell
     typealias CellData = BeerViewModel
     
-    private static let cellID = "beerCell"
     private enum Section: CaseIterable {
         case beers
     }
@@ -27,21 +26,40 @@ class BeersViewController: UIViewController {
         return collectionView
     }()
     
+    private lazy var errorLabel: UILabel = {
+        let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.numberOfLines = 0
+        label.textAlignment = .center
+        label.font = .preferredFont(forTextStyle: .title1)
+        label.textColor = .secondaryLabel
+        view.addSubview(label)
+        return label
+    }()
+    
     private lazy var dataSource: UICollectionViewDiffableDataSource = {
         UICollectionViewDiffableDataSource<Section, CellData>(collectionView: collectionView) { collectionView, indexPath, item in
-            guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: Self.cellID, for: indexPath) as? Cell else {
-                return .init()
+            guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: Cell.reuseID, for: indexPath) as? Cell else {
+                return UICollectionViewCell()
             }
             cell.configure(with: item)
             return cell
         }
     }()
     
+    private lazy var activityIndicator: UIActivityIndicatorView = {
+        let activity = UIActivityIndicatorView(style: .large)
+        activity.translatesAutoresizingMaskIntoConstraints = false
+        activity.isHidden = true
+        view.addSubview(activity)
+        return activity
+    }()
+    
     private var subscriptions = Set<AnyCancellable>()
     private(set) var viewModel: BeersViewModel
     weak var coordinator: Coordinator?
     
-    init(viewModel: BeersViewModel) {
+    init(viewModel: BeersViewModel = BeersViewModel()) {
         self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
     }
@@ -55,7 +73,7 @@ class BeersViewController: UIViewController {
         
         title = "Beers"
         view.backgroundColor = .systemBackground
-        collectionView.register(Cell.self, forCellWithReuseIdentifier: Self.cellID)
+        collectionView.register(Cell.self, forCellWithReuseIdentifier: Cell.reuseID)
         collectionView.dataSource = dataSource
         collectionView.delegate = self
         
@@ -64,6 +82,12 @@ class BeersViewController: UIViewController {
             collectionView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             collectionView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             collectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            
+            errorLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            errorLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            
+            activityIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            activityIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor),
         ])
         
         bindViewModel()
@@ -76,12 +100,20 @@ class BeersViewController: UIViewController {
     }
     
     private func bindViewModel() {
-        viewModel.beers.sink { [weak self] beers in
-            self?.didLoad(beers: beers)
+        viewModel.error.sink { [weak self] in
+            self?.errorLabel.text = $0
+        }.store(in: &subscriptions)
+        
+        viewModel.isLoading.print("Loading").sink { [weak self] in
+            self?.activityIndicator.isHidden = !$0
+        }.store(in: &subscriptions)
+        
+        viewModel.beers.sink { [weak self] in
+            self?.refreshBeers($0)
         }.store(in: &subscriptions)
     }
     
-    private func didLoad(beers: [CellData]) {
+    private func refreshBeers(_ beers: [CellData]) {
         var snapshot = NSDiffableDataSourceSnapshot<Section, CellData>()
         snapshot.appendSections(Section.allCases)
         snapshot.appendItems(beers, toSection: .beers)
