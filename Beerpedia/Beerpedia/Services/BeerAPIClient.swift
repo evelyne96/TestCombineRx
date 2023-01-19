@@ -8,11 +8,19 @@
 import Foundation
 import Combine
 
-enum BeerEndpoints: String {
+enum BeerEndpoints: CustomStringConvertible {
     static let baseURL = URL(string: "https://api.punkapi.com/v2")
-    var url: URL? { Self.baseURL?.appending(path: rawValue) }
+    var url: URL? { Self.baseURL?.appending(path: description) }
     
-    case beers = "beers"
+    case beers
+    case beer(id: Int)
+    
+    var description: String {
+        switch self {
+        case .beers: return "beers"
+        case .beer(let id): return "beers/\(id)"
+        }
+    }
 }
 
 class BeerAPIClient: APIClient {
@@ -27,5 +35,9 @@ class BeerAPIClient: APIClient {
     
     func getImage(url: URL) -> AnyPublisher<Data, APIError> {
         getData(url: url)
+    }
+    
+    func getBeer(id: Int) -> AnyPublisher<[Beer], APIError> {
+        get(url: BeerEndpoints.beer(id: id).url, decoder: JSONDecoder.snakeCaseDecoder)
     }
 }
