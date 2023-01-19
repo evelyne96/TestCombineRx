@@ -85,7 +85,6 @@ class BeerDetailsViewController: UIViewController {
     }
     
     private func bindViews() {
-        imageView.image = viewModel.image.value
         name.text = viewModel.name
         firstBrewed.text = viewModel.firstBrewed
         contributed.text = viewModel.contributedBy

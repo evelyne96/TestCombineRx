@@ -86,7 +86,6 @@ final class BeerCell: UICollectionViewCell, ReusableView {
     }
     
     func configure(with viewModel: BeerViewModel) {
-        imageView.image = viewModel.image.value
         name.text = viewModel.name
         firstBrewed.text = viewModel.firstBrewed
         contributed.text = viewModel.contributedBy
