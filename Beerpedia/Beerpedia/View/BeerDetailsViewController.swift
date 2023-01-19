@@ -81,12 +81,7 @@ class BeerDetailsViewController: UIViewController {
         ])
         
         bindViews()
-    }
-    
-    override func viewDidAppear(_ animated: Bool) {
-        super.viewDidAppear(animated)
-        
-        viewModel.viewEvent.send(.onAppear)
+        viewModel.viewEvent.send(.onLoaded)
     }
     
     private func bindViews() {

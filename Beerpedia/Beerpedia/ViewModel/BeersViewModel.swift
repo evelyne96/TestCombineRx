@@ -9,7 +9,7 @@ import Combine
 import Foundation
 
 enum ViewEvent: Equatable {
-    case onAppear
+    case onLoaded
     case didSelect(_ indexPath: IndexPath)
 }
 
@@ -42,7 +42,7 @@ final class BeersViewModel {
     
     private func createSubscriptions() {
         viewEvent
-            .filter { $0 == .onAppear }
+            .filter { $0 == .onLoaded }
             .flatMap { [weak self] _ in
                 
                 self?.state.send(.loading(state: true))

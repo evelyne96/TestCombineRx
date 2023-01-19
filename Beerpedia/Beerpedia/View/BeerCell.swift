@@ -94,6 +94,6 @@ final class BeerCell: UICollectionViewCell, ReusableView {
                 self?.imageView.image = $0
             }.store(in: &subscriptions)
         
-        viewModel.viewEvent.send(.onAppear)
+        viewModel.viewEvent.send(.onLoaded)
     }
 }

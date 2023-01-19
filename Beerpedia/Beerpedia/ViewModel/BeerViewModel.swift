@@ -27,7 +27,7 @@ final class BeerViewModel {
         self.apiClient = apiClient
         self.beer = beer
         
-        viewEvent.filter{ $0 == .onAppear}
+        viewEvent.filter{ $0 == .onLoaded}
             .sink { [weak self] _ in
                 self?.loadImage()
             }.store(in: &subscriptions)
