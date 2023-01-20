@@ -353,3 +353,60 @@ func tryNonAutoconnectTimer() {
 // tryAutoconnectTimer()
 //tryNonAutoconnectTimer()
     
+// MARK: -Operators
+
+extension Publisher where Self.Failure == Never {
+    public func sinkAndPrintValue(_ name: String) -> AnyCancellable {
+        return sink { _ in } receiveValue: { value in debugPrint("\(name): \(value)") }
+    }
+}
+
+extension Publisher {
+    public func sinkAndPrintValueOrError(_ name: String) -> AnyCancellable {
+        return sink { completion in debugPrint("\(name): \(completion)") }
+                receiveValue: { value in debugPrint("\(name): \(value)") }
+    }
+}
+
+
+/**
+ #Collect
+        - Collects the received elements and provides them in a single array.
+    - !!! uses unbounded amount of memory to buffer values
+    - It can collect by count
+        - unlimited, collects all received values into one Array until the publisher finishes
+        - by count, collects all received values into multiple Arrays containing count number of values until the publisher finishes
+    - Time and count strategy
+ */
+let publisher = [1, 2, 3, 4, 5].publisher
+//publisher.collect().print().sinkAndPrintValue("Collect")
+//publisher.collect(3).sinkAndPrintValue("Collect 3")
+publisher.collect(.byTimeOrCount(DispatchQueue.global(), .seconds(1), 5)).sinkAndPrintValue("Collect strategy")
+
+/**
+ #Map
+        - Same as standard map just works with values emitted by a publisher
+ */
+
+/**
+ #TryMap
+        - Same as map but it can throw errors which will be emitted downstream
+    - See dataTaskPublisher
+ */
+
+/**
+ #SetFailureType
+        - Does not send a failure it just changes the failure type to the specified type e.g. Transform Never error types to a new error type to match the type info with other publishers
+ */
+func provideValueOrFail(_ value: Int?) -> AnyPublisher<Int, MyError> {
+    guard let value else {
+        return Fail(error: MyError.unknown).eraseToAnyPublisher()
+    }
+    return Just(value)
+        .setFailureType(to: MyError.self)
+        .eraseToAnyPublisher()
+}
+
+let p = provideValueOrFail(5)
+p.sinkAndPrintValueOrError("SetFailure")
+
