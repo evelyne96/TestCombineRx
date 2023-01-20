@@ -104,15 +104,16 @@ struct IntSubscriber: Subscriber {
 //
 //randomIntPublisher.filter { $0 < 5 }.subscribe(IntSubscriber(demand: .max(3)))
 //
-//randomIntPublisher.print().sink{ _ in }
-//randomIntPublisher.print().collect(100).first().sink { _ in }
+//randomIntPublisher.print().sink()
+//randomIntPublisher.print().collect(100).first().sink()
 //[0, 1].publisher.subscribe(IntSubscriber(demand: .unlimited))
 
 
 // MARK: Publishers
 
 var subscriptions = Set<AnyCancellable>()
-enum MyError: Error {
+let anyStrIntList: [Any] = [1, 2, 3, 4,"one", 5, 6]
+enum MyError: String, Error {
     case unknown
 }
 
@@ -131,8 +132,8 @@ enum MyError: Error {
 func justPublisher() {
     let justP = Just("Hello")
     
-    let sub1 = justP.print("Just").sink { _ in }
-    let sub2 = justP.print().sink { _ in }
+    let sub1 = justP.print("Just").sink()
+    let sub2 = justP.print().sink()
 }
 
 //justPublisher()
@@ -150,13 +151,13 @@ func justPublisher() {
     - To wrap asyn calls that don't have publisher support yet
     -
  **/
-func future(value: Int) -> Future<Int, MyError> {
+func futureFailOnValueLessThanTwo(value: Int, delay: TimeInterval = 1) -> Future<Int, MyError> {
     return Future<Int, MyError> { promise in
         print("Entered after publisher is initialized")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
             print("Send result")
             if value > 2 {
-                promise(.success(value + 1))
+                promise(.success(value))
             } else {
                 promise(.failure(MyError.unknown))
             }
@@ -165,7 +166,7 @@ func future(value: Int) -> Future<Int, MyError> {
 }
 
 func tryFuture() {
-    let future = future(value: 5)
+    let future = futureFailOnValueLessThanTwo(value: 5)
 
     // Subscriber after 5 seconds
     DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
@@ -188,7 +189,7 @@ func tryFuture() {
  **/
 func deferP(value: Int) -> AnyPublisher<Int, MyError> {
     return Deferred {
-        future(value: value)
+        futureFailOnValueLessThanTwo(value: value)
     }.eraseToAnyPublisher()
 }
 
@@ -254,7 +255,7 @@ func notification() {
     let notification2 = Notification.Name("Hello2")
     let publisher = NotificationCenter.default.publisher(for: notification)
     
-    let subscription = publisher.print("Notification").sink { _ in }
+    let subscription = publisher.print("Notification").sink()
     
     NotificationCenter.default.post(Notification(name: notification2))
     NotificationCenter.default.post(Notification(name: notification2))
@@ -366,22 +367,11 @@ extension Publisher {
         return sink { completion in debugPrint("\(name): \(completion)") }
                 receiveValue: { value in debugPrint("\(name): \(value)") }
     }
+    
+    public func sink() -> AnyCancellable {
+        return sink { _ in } receiveValue: { _ in }
+    }
 }
-
-
-/**
- #Collect
-        - Collects the received elements and provides them in a single array.
-    - !!! uses unbounded amount of memory to buffer values
-    - It can collect by count
-        - unlimited, collects all received values into one Array until the publisher finishes
-        - by count, collects all received values into multiple Arrays containing count number of values until the publisher finishes
-    - Time and count strategy
- */
-let publisher = [1, 2, 3, 4, 5].publisher
-//publisher.collect().print().sinkAndPrintValue("Collect")
-//publisher.collect(3).sinkAndPrintValue("Collect 3")
-publisher.collect(.byTimeOrCount(DispatchQueue.global(), .seconds(1), 5)).sinkAndPrintValue("Collect strategy")
 
 /**
  #Map
@@ -393,6 +383,58 @@ publisher.collect(.byTimeOrCount(DispatchQueue.global(), .seconds(1), 5)).sinkAn
         - Same as map but it can throw errors which will be emitted downstream
     - See dataTaskPublisher
  */
+
+/**
+ #CompactMap
+        - Only publishes non-nil values
+ */
+//anyStrIntList.publisher.compactMap { $0 as? Int }.sinkAndPrintValue("CompactMap")
+
+/**
+ #TryCompactMap
+        - ame as  compactMap with the possibility of error throwing/failing pipeline
+ */
+
+/**
+ #FlatMap
+        - Replaces the incoming values with a new publisher
+    - flatMap(maxPublishers: ...) it can also specify the maximum number of concurrent publisher subscriptions
+      i.e. .max(1) will create a serial publisher  .unlimited creates an unbounded concurrent publisher
+    #Usage:
+        - Pass elements returned by a publisher to a new method that creates a new publisher and subscribe to the results emitted by the second publisher only
+        - e.g. create concurrent data tasks from a list of urls
+ */
+
+func tryFlatMapWithError(){
+    let futureIntsWithFail = [1, 2, 3, 4, 5]
+    
+    
+    // publishers with error thrown i.e. the whole pipeline is finished and the rest of them after the fail won't be started
+    futureIntsWithFail.publisher
+        .flatMap { futureFailOnValueLessThanTwo(value: $0, delay: TimeInterval($0)) }
+        .sinkAndPrintValueOrError("Flatmap With error")
+        .store(in: &subscriptions)
+}
+
+func tryFlatMapWithNoError() {
+    let futureIntsNoFail = [3, 4, 5]
+    // Serial publisher creation
+    futureIntsNoFail.publisher
+                    .flatMap(maxPublishers: .max(1)) { futureFailOnValueLessThanTwo(value: $0, delay: TimeInterval($0)) }
+                    .sinkAndPrintValueOrError("Flatmap Max 1")
+                    .store(in: &subscriptions)
+    
+    // All publihsers started concurrently and waits for all of them to finish before emitting the result
+    // Wait for all of them to be finished
+    futureIntsNoFail.publisher
+                    .flatMap { futureFailOnValueLessThanTwo(value: $0, delay: TimeInterval($0)) }
+                    .collect()
+                    .sinkAndPrintValueOrError("Flatmap and collect")
+                    .store(in: &subscriptions)
+}
+
+//tryFlatMapWithError()
+//tryFlatMapWithNoError()
 
 /**
  #SetFailureType
@@ -407,6 +449,363 @@ func provideValueOrFail(_ value: Int?) -> AnyPublisher<Int, MyError> {
         .eraseToAnyPublisher()
 }
 
-let p = provideValueOrFail(5)
-p.sinkAndPrintValueOrError("SetFailure")
+//let p = provideValueOrFail(5)
+//p.sinkAndPrintValueOrError("SetFailure")
 
+
+/**
+ #ReplaceNil(with: ...)
+        - Replaces the nil elements from the stream with a default element
+    #Usage
+        - Specify a placeholder for nil values,
+ */
+
+/**
+ #ReplaceError(with: ...)
+        - Catches the error provided by the upstream publisher and replaces it with a default value
+    - The stream will still complete/finish even if we replace the error
+    #Usage
+        - If we don't care about the error that was emitted and just want to provide a default return value when an error is thrown
+ */
+
+/**
+ #ReplaceEmpty(with: ...)
+        - Return a value when a publisher finishes without emitting any values e.g. Empty publisher
+    - It will only return a value if the publisher receives a finished completion before it produces any values
+    #Usage
+        - When we want the stream to always provide a value even if the upstream publishers do not provide one
+ */
+
+//Empty<Int, Never>().replaceEmpty(with: 100_000).print("ReplaceEmpty").sink()
+
+//Empty<Int, Never>(completeImmediately: false).replaceEmpty(with: 100_000).print("ReplaceEmptyWithoutFinish").sink()
+
+
+/**
+ #Scan(acc, current)
+        - Emits the accumulated values and the current values and return a publisher the emits these accumulations over time
+    - Similar to reduce, but while reduce emits only the result of all of the accumulated values scan provides the intermediate results as well
+ */
+
+func tryScan() {
+    [1,2,3,4,5].publisher
+               .scan(0, +)
+               .sinkAndPrintValue("Scan")
+}
+
+
+/**
+ #TryScan(acc, current)
+        - Similar to scan but we can throw an error from it as well
+ */
+func tryFailableScan() {
+    anyStrIntList.publisher
+                 .tryScan(0) {
+                     guard let value = $1 as? Int else { throw MyError.unknown }
+                     return $0 + value
+                 }.sinkAndPrintValueOrError("TryScan")
+}
+
+/**
+ #Filter(condition)
+        - It will only republish the value that it got if the condition is satisfied for this value otherwise it just drops it
+ */
+
+/**
+ #TryFilter(condition)
+        - Same as filter with the option to throw an error and fail the filtering
+ */
+
+func tryFailableFilter() {
+    anyStrIntList.publisher
+                 .tryFilter {
+                     guard let value = $0 as? Int else {
+                         throw MyError.unknown
+                     }
+                     return value > 3
+                 }.sinkAndPrintValueOrError("Try filter")
+}
+
+/**
+ #RemoveDuplicates
+        - Automatically works for any values that conform to Equatable
+    - If the values are not Equatable we can provide custom implementation for equality check through a closure
+    - !!! Only checks the previously sent value and the current value, if we have reucurring values that are not going to be published sequentially they won't be removed
+ */
+
+func tryRemoveDuplicates() {
+    [1, 2, 2, 1, 3, 4, 3, 2].publisher
+                            .removeDuplicates()
+                            .sinkAndPrintValue("Remove Duplicates")
+}
+
+/**
+ #TryRemoveDuplicates
+        - Same as removeDuplicates with the possibility of error throwing/failing pipeline
+ */
+
+
+
+/**
+ #Collect
+        - Collects the received elements and provides them in a single array.
+    - !!! uses unbounded amount of memory to buffer values
+    - It can collect by count
+        - unlimited, collects all received values into one Array until the publisher finishes
+        - by count, collects all received values into multiple Arrays containing count number of values until the publisher finishes
+    - Time and count strategy
+        - specifies the scheduler on which to operate and time interval stride over which to run, collects all values that it received from the upstream during this time
+ */
+func tryCollect() {
+    let publisher = [1, 2, 3, 4, 5].publisher
+    //publisher.collect().print().sinkAndPrintValue("Collect")
+    //publisher.collect(3).sinkAndPrintValue("Collect 3")
+    publisher
+        .flatMap(maxPublishers: .unlimited) { futureFailOnValueLessThanTwo(value: $0 + 3, delay: TimeInterval($0)) }
+        .collect(.byTimeOrCount(DispatchQueue.global(), .seconds(4), 3))
+        .print("Collect by time & count")
+        .sink()
+        .store(in: &subscriptions)
+}
+
+//tryCollect()
+
+/**
+ #IgnoreOutput
+        - Drops all values that were published and only passes along the completion result
+    #Usage
+        - if we only care if the stream has finished or failed
+ */
+
+
+/**
+ #Reduce(acc, current)
+        - return a publisher the emits these accumulated result of all the values in the stream and a default value
+    - It doesn't provide partial result after each publisher values as scan does
+ */
+
+
+func tryReduce() {
+    ["Hello", "World"].publisher
+                      .map { $0.count }
+                      .scan(0, +)
+                      .reduce(0, +)
+                      .sinkAndPrintValue("Scan & reduce with str lenght")
+}
+
+/**
+ #TryReduce(acc, current)
+        - same as reduce but can throw an error and result in the failure of this publisher
+ */
+
+
+// Count/Max/Min variants
+/**
+ #Max
+ #TryMax
+ #Min
+ #TryMin
+ #Count
+ */
+
+
+// First/Last variants
+/**
+ #First
+ #Last
+ #TryLastWhere
+ #First(where: )
+ #Last(where: )
+ */
+
+/**
+ #First(where: )
+        - Provides the first value that satisfies the condition
+    - Once the condition is satisfied it automatically cancels the subscription and completes
+ */
+func tryFirstWhere() {
+    [1, 2, 3, 4].publisher.print("numbers").first { $0 == 2 }.sinkAndPrintValue("First Value")
+}
+
+/**
+ #Last(where: )
+        - Provides the last value that satisfies the condition
+    - !!! The publisher that we use this on must complete for this operator to work
+ */
+
+
+// Basic drop
+/**
+ #DropFirst(count)
+ #Drop(while: {condition is met}
+ #TryDrop(while: {condition is met}
+ */
+/**
+ #Drop(untilOutputFrom: triggerPublisher)
+        - Drops any values emitted by a publisher until a second publisher starts emitting values
+ */
+func tryDropUntilOutputFrom() {
+    let firstPublisher = PassthroughSubject<Void, Never>()
+    let secondPublisher = PassthroughSubject<Int, Never>()
+
+    secondPublisher.drop(untilOutputFrom: firstPublisher)
+                   .sinkAndPrintValue("Drop until output")
+                   .store(in: &subscriptions)
+
+    secondPublisher.send(1)
+    secondPublisher.send(2)
+    secondPublisher.send(3)
+
+    firstPublisher.send()
+
+    secondPublisher.send(5)
+    secondPublisher.send(6)
+}
+
+
+
+/**
+ #Prefix(count)
+        - Receive "count" number of values then terminates the publisher afterwards
+ */
+
+/**
+ #Prefix(while condition is met)
+        - Receive values  while the condition is met then terminates the publisher afterwards
+ */
+
+/**
+ #Prefix(untilOutputFrom: triggerPublisher)
+        - Sends values emitted by the publisher until a second publisher starts emitting values at which point it terminates the publisher
+ */
+
+func tryPrefix() {
+//    [0, 1, 2, 3].publisher.print("Publisher").prefix { $0 < 2 }.print("Prefix").sink()
+    
+    let firstPublisher = PassthroughSubject<Void, Never>()
+    let secondPublisher = PassthroughSubject<Int, Never>()
+
+    secondPublisher.prefix(untilOutputFrom: firstPublisher)
+                   .print("Prefix until output")
+                   .sink()
+                   .store(in: &subscriptions)
+
+    secondPublisher.send(1)
+    secondPublisher.send(2)
+    secondPublisher.send(3)
+
+    firstPublisher.send()
+
+    secondPublisher.send(5)
+    secondPublisher.send(6)
+}
+
+//tryPrefix()
+
+/**
+ #Prepend(values)
+ #Prepend(sequence)
+ */
+
+/**
+ #Prepend(publisher)
+        - publisher1.prepend(publisher2)
+    - publisher2 must finish before publisher1 can continue to receive values
+ */
+
+func tryPrepend() {
+    let firstPublisher = PassthroughSubject<Int, Never>()
+    let secondPublisher = PassthroughSubject<Int, Never>()
+
+    secondPublisher.prepend(firstPublisher)
+                   .print("Prepend")
+                   .sink()
+                   .store(in: &subscriptions)
+
+    secondPublisher.prepend([-1, -1])
+                   .print("Prepend value")
+                   .sink()
+                   .store(in: &subscriptions)
+    
+    secondPublisher.send(1)
+    secondPublisher.send(2)
+    secondPublisher.send(3)
+
+    firstPublisher.send(-1)
+    firstPublisher.send(-2)
+    firstPublisher.send(-3)
+    
+    // if we don't finish the prepended publisher we won't know what we'll prepend to
+    firstPublisher.send(completion: .finished)
+
+    secondPublisher.send(4)
+    secondPublisher.send(5)
+}
+
+//tryPrepend()
+
+/**
+ #Append(values)
+ #Append(sequence)
+ */
+
+/**
+ #Append(publisher)
+        - publisher1.append(publisher2)
+    - publisher1 must finish before publisher2 can continue to receive values
+ */
+
+func tryAppend() {
+    let firstPublisher = PassthroughSubject<Int, Never>()
+    let secondPublisher = PassthroughSubject<Int, Never>()
+
+    firstPublisher.append(secondPublisher)
+                  .print("Append")
+                  .sink()
+                  .store(in: &subscriptions)
+    
+    secondPublisher.send(1)
+    secondPublisher.send(2)
+    secondPublisher.send(3)
+
+    firstPublisher.send(-1)
+    firstPublisher.send(-2)
+    firstPublisher.send(-3)
+    
+    // if we don't finish the prepended publisher we won't know what we'll prepend to
+    firstPublisher.send(completion: .finished)
+
+    secondPublisher.send(4)
+    secondPublisher.send(5)
+}
+
+//tryAppend()
+
+/**
+ #SwitchToLatest
+    - Flattens any nested publisher types and provides the most recent publisher only and cancels all previous publishers
+    #Usage
+        - prevents earlier publishers to do unncessary work
+        - e.g. network requests from frequent user interface publishers, continuous refreshes that create API calls
+ */
+
+func trySwitchToLatest() {
+    let s1 = PassthroughSubject<Int, Never>()
+    let s2 = PassthroughSubject<Int, Never>()
+
+    let subjects = PassthroughSubject<PassthroughSubject<Int, Never>, Never>()
+
+    subjects
+        .switchToLatest()
+        .sinkAndPrintValue("SwitchToLatest")
+
+    subjects.send(s1)
+    s1.send(1)
+    subjects.send(s2)
+    s1.send(2)
+    s2.send(3)
+    subjects.send(s1)
+    s1.send(2)
+}
+
+trySwitchToLatest()
