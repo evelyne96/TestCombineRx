@@ -23,7 +23,6 @@ final class BeersViewModel {
     private let apiClient: BeerAPIClient
     private let coordinator: AppCoordinator
     private var subscriptions = Set<AnyCancellable>()
-    private var dataLoadSubscriptions = Set<AnyCancellable>()
     
     private var state = PassthroughSubject<State, Never>()
     
@@ -44,9 +43,27 @@ final class BeersViewModel {
     private func createSubscriptions() {
         viewEvent
             .filter { $0 == .onLoaded }
-            .sink { [weak self] _ in
-                self?.loadBeers()
-            }.store(in: &subscriptions)
+            .flatMap { [weak self] _ in
+                guard let self else {
+                    return Just([Beer]()).setFailureType(to: APIError.self).eraseToAnyPublisher()
+                }
+                self.state.send(.loading(state: true))
+                return self.apiClient.getBeers()
+            }
+            .first()
+            .sink(receiveCompletion: { [weak self] result in
+                switch result {
+                case .failure(let error):
+                    self?.state.send(.loading(state: false))
+                    self?.state.send(.error(description: error.description))
+                case .finished:
+                    break
+                }
+            }, receiveValue: {  [weak self] value in
+                self?.state.send(.loading(state: false))
+                self?.state.send(.error(description: nil))
+                self?.state.send(.dataLoaded(beers: value.mapToBeerViewModel()))
+            }).store(in: &subscriptions)
         
         state.sink { [weak self] state in
             switch state {
@@ -69,26 +86,6 @@ final class BeersViewModel {
                 break
             }
         }.store(in: &subscriptions)
-    }
-    
-    private func loadBeers() {
-        dataLoadSubscriptions.cancelAll()
-        
-        state.send(.loading(state: true))
-        apiClient.getBeers()
-            .sink(receiveCompletion: { [weak self] result in
-            switch result {
-            case .failure(let error):
-                self?.state.send(.loading(state: false))
-                self?.state.send(.error(description: error.description))
-            case .finished:
-                break
-            }
-        }, receiveValue: {  [weak self] value in
-            self?.state.send(.loading(state: false))
-            self?.state.send(.error(description: nil))
-            self?.state.send(.dataLoaded(beers: value.mapToBeerViewModel()))
-        }).store(in: &dataLoadSubscriptions)
     }
 }
 
