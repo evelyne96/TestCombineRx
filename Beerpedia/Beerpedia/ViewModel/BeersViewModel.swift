@@ -76,7 +76,6 @@ final class BeersViewModel {
         
         state.send(.loading(state: true))
         apiClient.getBeers()
-            .receive(on: DispatchQueue.main)
             .sink(receiveCompletion: { [weak self] result in
             switch result {
             case .failure(let error):
@@ -101,7 +100,6 @@ extension Array where Element == Beer {
 
 extension Set where Element == AnyCancellable {
     mutating func cancelAll() {
-        forEach { $0.cancel() }
         removeAll()
     }
 }

@@ -57,7 +57,6 @@ class BeersViewController: UIViewController {
     
     private var subscriptions = Set<AnyCancellable>()
     private(set) var viewModel: BeersViewModel
-    weak var coordinator: Coordinator?
     
     init(viewModel: BeersViewModel = BeersViewModel()) {
         self.viewModel = viewModel
@@ -96,15 +95,19 @@ class BeersViewController: UIViewController {
     
     private func bindViewModel() {
         viewModel.error
+            .receive(on: DispatchQueue.main)
             .assign(to: \.text, on: errorLabel)
             .store(in: &subscriptions)
         
         viewModel.isLoading
             .map { !$0 }
+            .receive(on: DispatchQueue.main)
             .assign(to: \.isHidden, on: activityIndicator)
             .store(in: &subscriptions)
         
-        viewModel.beers.sink { [weak self] in
+        viewModel.beers
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] in
             self?.refreshBeers($0)
         }.store(in: &subscriptions)
     }

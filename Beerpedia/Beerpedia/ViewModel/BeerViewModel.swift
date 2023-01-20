@@ -45,7 +45,6 @@ final class BeerViewModel {
         apiClient.getImage(url: url)
             .map { UIImage(data: $0) }
             .replaceError(with: nil)
-            .receive(on: DispatchQueue.main)
             .sink { [weak self] in
                 self?.image.send($0)
                 self?.isDownloading.send(false)

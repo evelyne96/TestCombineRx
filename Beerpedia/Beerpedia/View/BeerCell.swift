@@ -91,6 +91,7 @@ final class BeerCell: UICollectionViewCell, ReusableView {
         contributed.text = viewModel.contributedBy
         
         viewModel.image
+            .receive(on: DispatchQueue.main)
             .assign(to: \.image, on: imageView)
             .store(in: &subscriptions)
         

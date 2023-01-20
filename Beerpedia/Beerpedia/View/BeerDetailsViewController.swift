@@ -90,6 +90,7 @@ class BeerDetailsViewController: UIViewController {
         contributed.text = viewModel.contributedBy
         
         viewModel.image
+            .receive(on: DispatchQueue.main)
             .assign(to: \.image, on: imageView)
             .store(in: &cancellables)
     }
