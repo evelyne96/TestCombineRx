@@ -40,7 +40,7 @@ final class BeerViewModel {
             return
         }
         
-        subscriptions.cancelAll()
+        subscriptions.removeAll()
         isDownloading.send(true)
         apiClient.getImage(url: url)
             .map { UIImage(data: $0) }

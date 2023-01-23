@@ -94,9 +94,3 @@ extension Array where Element == Beer {
         map { BeerViewModel(beer: $0) }
     }
 }
-
-extension Set where Element == AnyCancellable {
-    mutating func cancelAll() {
-        removeAll()
-    }
-}
