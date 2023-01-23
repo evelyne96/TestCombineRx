@@ -8,13 +8,30 @@
 import Foundation
 import Combine
 
-enum APIError: Error {
+enum APIError: Error, CustomStringConvertible {
     case unknown
     case invalidRequest
     case invalidData
     case invalidResponse
     case serverError(_ error: String)
     case decodingError(_ error: String)
+    
+    var description: String {
+        switch self {
+        case .unknown:
+            return "Unknown"
+        case .invalidRequest:
+            return "Invalid Request"
+        case .invalidData:
+            return "Invalid Data"
+        case .invalidResponse:
+            return "Invalid Response"
+        case .serverError(let error):
+            return "Server Error: \(error)"
+        case .decodingError(let error):
+            return "Decoding Error: \(error)"
+        }
+    }
 }
 
 protocol APIClient {
