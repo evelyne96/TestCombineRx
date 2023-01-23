@@ -90,11 +90,13 @@ final class BeerCell: UICollectionViewCell, ReusableView {
         firstBrewed.text = viewModel.firstBrewed
         contributed.text = viewModel.contributedBy
         
+        // start image loading
+        viewModel.imagePublisher.sink { _ in }.store(in: &subscriptions)
+        
+        // setup received data
         viewModel.image
             .receive(on: DispatchQueue.main)
             .assign(to: \.image, on: imageView)
             .store(in: &subscriptions)
-        
-        viewModel.viewEvent.send(.onLoaded)
     }
 }

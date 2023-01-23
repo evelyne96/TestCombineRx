@@ -50,7 +50,6 @@ final class BeersViewController: UIViewController {
     private lazy var activityIndicator: UIActivityIndicatorView = {
         let activity = UIActivityIndicatorView(style: .large)
         activity.translatesAutoresizingMaskIntoConstraints = false
-        activity.isHidden = true
         view.addSubview(activity)
         return activity
     }()
@@ -100,9 +99,10 @@ final class BeersViewController: UIViewController {
             .store(in: &subscriptions)
         
         viewModel.isLoading
-            .map { !$0 }
             .receive(on: DispatchQueue.main)
-            .assign(to: \.isHidden, on: activityIndicator)
+            .sink{ [weak self] in
+                $0 ? self?.activityIndicator.startAnimating() : self?.activityIndicator.stopAnimating()
+            }
             .store(in: &subscriptions)
         
         viewModel.beers
