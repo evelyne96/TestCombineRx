@@ -11,45 +11,22 @@ import UIKit
 
 final class BeerDetailsViewController: UIViewController {
     private enum UIConstants {
+        static var nib: String = "BeerDetails"
         static var spacing: CGFloat = 16
     }
     
     private let viewModel: BeerViewModel
     private var cancellables = Set<AnyCancellable>()
-    private lazy var imageView: UIImageView = {
-        let image = UIImageView()
-        image.translatesAutoresizingMaskIntoConstraints = false
-        image.contentMode = .scaleAspectFit
-        return image
-    }()
-
-    private lazy var name: UILabel = {
-        let label = UILabel()
-        label.numberOfLines = 0
-        label.font = .preferredFont(forTextStyle: .title1)
-        label.setContentCompressionResistancePriority(.required, for: .vertical)
-        return label
-    }()
     
-    private lazy var firstBrewed: UILabel = {
-        let label = UILabel()
-        label.numberOfLines = 0
-        label.font = .preferredFont(forTextStyle: .body)
-        label.setContentCompressionResistancePriority(.required, for: .vertical)
-        return label
-    }()
-    
-    private lazy var contributed: UILabel = {
-        let label = UILabel()
-        label.numberOfLines = 0
-        label.font = .preferredFont(forTextStyle: .body)
-        label.setContentCompressionResistancePriority(.required, for: .vertical)
-        return label
-    }()
+    @IBOutlet weak var imageView: UIImageView!
+    @IBOutlet weak var name: UILabel!
+    @IBOutlet weak var firstBrewed: UILabel!
+    @IBOutlet weak var contributed: UILabel!
     
     init(viewModel: BeerViewModel) {
         self.viewModel = viewModel
-        super.init(nibName: nil, bundle: nil)
+        super.init(nibName: UIConstants.nib,
+                   bundle: nil)
     }
     
     required init?(coder: NSCoder) {
@@ -59,26 +36,6 @@ final class BeerDetailsViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
-        let labelStack = UIStackView(arrangedSubviews: [name, firstBrewed, contributed])
-        labelStack.axis  = .vertical
-        labelStack.alignment = .center
-        labelStack.spacing = UIConstants.spacing
-        labelStack.isLayoutMarginsRelativeArrangement = true
-        labelStack.layoutMargins = UIEdgeInsets(uniform: UIConstants.spacing)
-        
-        let contentStack = UIStackView(arrangedSubviews: [imageView, labelStack])
-        contentStack.translatesAutoresizingMaskIntoConstraints = false
-        contentStack.axis = .vertical
-        contentStack.spacing = UIConstants.spacing
-        contentStack.isLayoutMarginsRelativeArrangement = true
-        contentStack.layoutMargins = UIEdgeInsets(uniform: UIConstants.spacing)
-        view.addSubview(contentStack)
-        
-        NSLayoutConstraint.activate([
-            contentStack.widthAnchor.constraint(equalTo: view.widthAnchor),
-            contentStack.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-            contentStack.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
-        ])
         
         bindViews()
         viewModel.viewEvent.send(.onLoaded)
