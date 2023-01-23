@@ -9,7 +9,7 @@ import Combine
 import Foundation
 import UIKit
 
-class BeerDetailsViewController: UIViewController {
+final class BeerDetailsViewController: UIViewController {
     private enum UIConstants {
         static var spacing: CGFloat = 16
     }

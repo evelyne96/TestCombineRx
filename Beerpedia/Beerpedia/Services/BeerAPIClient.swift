@@ -23,7 +23,7 @@ enum BeerEndpoints: CustomStringConvertible {
     }
 }
 
-class BeerAPIClient: APIClient {
+final class BeerAPIClient: APIClient {
     let urlSession: URLSession
     init(urlSession: URLSession = .shared) {
         self.urlSession = urlSession

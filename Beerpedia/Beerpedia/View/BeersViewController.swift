@@ -10,7 +10,7 @@ import Foundation
 import SwiftUI
 import UIKit
 
-class BeersViewController: UIViewController {
+final class BeersViewController: UIViewController {
     typealias Cell = BeerCell
     typealias CellData = BeerViewModel
     
