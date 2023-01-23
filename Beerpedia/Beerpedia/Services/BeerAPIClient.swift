@@ -37,7 +37,18 @@ final class BeerAPIClient: APIClient {
         getData(url: url)
     }
     
-    func getBeer(id: Int) -> AnyPublisher<[Beer], APIError> {
+    func getBeer(id: Int) -> AnyPublisher<Beer, APIError> {
+        getBeerWith(id: id)
+            .tryMap { beers in
+                guard let first = beers.first else { throw APIError.invalidResponse }
+                
+                return first
+            }
+            .mapError { $0 as? APIError ?? APIError.unknown }
+            .eraseToAnyPublisher()
+    }
+    
+    private func getBeerWith(id: Int) -> AnyPublisher<[Beer], APIError> {
         get(url: BeerEndpoints.beer(id: id).url, decoder: JSONDecoder.snakeCaseDecoder)
     }
 }
