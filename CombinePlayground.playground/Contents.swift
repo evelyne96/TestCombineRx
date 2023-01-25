@@ -115,6 +115,32 @@ var subscriptions = Set<AnyCancellable>()
 let anyStrIntList: [Any] = [1, 2, 3, 4,"one", 5, 6]
 enum MyError: String, Error {
     case unknown
+    case timeout
+}
+
+
+extension Publisher where Self.Failure == Never {
+    public func sinkAndPrintValue(_ name: String, printDate: Bool = false) -> AnyCancellable {
+        let prefix = printDate ? "\(Date.now) " : ""
+        return sink { _ in } receiveValue: { value in debugPrint("\(prefix)\(name): \(value)") }
+    }
+}
+
+extension Publisher {
+    public func sinkAndPrintValueOrError(_ name: String) -> AnyCancellable {
+        return sink { completion in debugPrint("\(name): \(completion)") }
+                receiveValue: { value in debugPrint("\(name): \(value)") }
+    }
+    
+    public func sink() -> AnyCancellable {
+        return sink { _ in } receiveValue: { _ in }
+    }
+}
+
+func delayedTyping(typing: [(TimeInterval, String)], printName: String = "") -> AnyPublisher<String, Never> {
+    return typing.publisher.flatMap { (delay, value) in
+        return Just(value).delay(for: .seconds(delay), scheduler: DispatchQueue.main).print(printName)
+    }.eraseToAnyPublisher()
 }
 
 // MARK: - Just
@@ -356,23 +382,6 @@ func tryNonAutoconnectTimer() {
     
 // MARK: -Operators
 
-extension Publisher where Self.Failure == Never {
-    public func sinkAndPrintValue(_ name: String) -> AnyCancellable {
-        return sink { _ in } receiveValue: { value in debugPrint("\(name): \(value)") }
-    }
-}
-
-extension Publisher {
-    public func sinkAndPrintValueOrError(_ name: String) -> AnyCancellable {
-        return sink { completion in debugPrint("\(name): \(completion)") }
-                receiveValue: { value in debugPrint("\(name): \(value)") }
-    }
-    
-    public func sink() -> AnyCancellable {
-        return sink { _ in } receiveValue: { _ in }
-    }
-}
-
 /**
  #Map
         - Same as standard map just works with values emitted by a publisher
@@ -554,17 +563,22 @@ func tryRemoveDuplicates() {
         - unlimited, collects all received values into one Array until the publisher finishes
         - by count, collects all received values into multiple Arrays containing count number of values until the publisher finishes
     - Time and count strategy
-        - specifies the scheduler on which to operate and time interval stride over which to run, collects all values that it received from the upstream during this time
+        - byTime: emits a value at each interval
+        - byTimeOrCount:
+            - specifies the scheduler on which to operate and time interval stride over which to run, collects all values that it received from the upstream during this time
+            - collects both by time and count i.e.
  */
 func tryCollect() {
     let publisher = [1, 2, 3, 4, 5].publisher
     //publisher.collect().print().sinkAndPrintValue("Collect")
     //publisher.collect(3).sinkAndPrintValue("Collect 3")
-    publisher
-        .flatMap(maxPublishers: .unlimited) { futureFailOnValueLessThanTwo(value: $0 + 3, delay: TimeInterval($0)) }
-        .collect(.byTimeOrCount(DispatchQueue.global(), .seconds(4), 3))
-        .print("Collect by time & count")
-        .sink()
+    
+    let emitZeroEverySecond = Timer.publish(every: 1.0, on: .main, in: .common).autoconnect().map { _ in 0 }
+    emitZeroEverySecond.sinkAndPrintValue("\(Date.now) Timer")
+                       .store(in: &subscriptions)
+    emitZeroEverySecond
+        .collect(.byTimeOrCount(DispatchQueue.global(), .seconds(5), 2))
+        .sinkAndPrintValue("Collect timeOrCount")
         .store(in: &subscriptions)
 }
 
@@ -819,24 +833,271 @@ func trySwitchToLatest() {
   - the output and input types of the merge publishers must match.
   - If one of the publishers finishes normally the merged publisher continues receiving values from the unfinished one, if one of the finishes with a failure we don't receive
     any more updates from the unfinished one either
+  - can be used with more than 2 publishers
  */
 
-func tryMerge() {
+func tryMergeWithFinishCompletion() {
     let s1 = PassthroughSubject<Int, MyError>()
     let s2 = PassthroughSubject<Int, MyError>()
 
     s1.merge(with: s2)
-      .sinkAndPrintValueOrError("Merge")
+      .sinkAndPrintValueOrError("Merge with S1 finish")
 
     s1.send(1)
     s1.send(2)
     s2.send(-1)
     s1.send(3)
     
+    debugPrint("Finish S1")
+    s1.send(completion: .finished)
+    
+    s1.send(4)
+    s2.send(-5)
+}
+
+func tryMergeWithErrorCompletion() {
+    let s1 = PassthroughSubject<Int, MyError>()
+    let s2 = PassthroughSubject<Int, MyError>()
+
+    s1.merge(with: s2).print()
+      .sinkAndPrintValueOrError("Merge With S1 error")
+
+    s1.send(1)
+    s1.send(2)
+    s2.send(-1)
+    s1.send(3)
+    
+    debugPrint("Fail S1")
     s1.send(completion: .failure(.unknown))
     
     s1.send(4)
     s2.send(-5)
 }
 
-tryMerge()
+//tryMergeWithFinishCompletion()
+//tryMergeWithErrorCompletion()
+
+
+/**
+ #CombineLatest
+    - accepts 2 upstream publishers and combines the results from them by providing a tuple with the latest values from all publishers whenever one of them publishes a new value
+  - it can merge publishers with different output types, but the failure type must match
+  - !!! the original publisher and every publisher that is combined with combineLatest has to emit at least one value from the combined publishers to start emitting value, this also means that we might
+     miss emitted values from one publisher if it is received before all the combined publishers sent out at least one value
+  - if one of the combined publisher completed without error the other publishers can still emit values and will combine the results with the last emitted value from the finished publisher
+  - if one of the publishers completed with an error the whole pipeline completes with an error and stops emitting values
+ */
+
+
+func tryCombineLatestWithErrorCompletion() {
+    let s1 = PassthroughSubject<Int, MyError>()
+    let s2 = PassthroughSubject<Int, MyError>()
+
+    s1.combineLatest(s2, s2)
+      .sinkAndPrintValueOrError("CombineLatest with error")
+
+    s1.send(1)
+    s1.send(2)
+    s2.send(-2)
+    s1.send(3)
+    
+    debugPrint("Fail S1")
+    s1.send(completion: .failure(.unknown))
+    
+    s2.send(-3)
+    s1.send(4)
+}
+
+func tryCombineLatestWithFinishedCompletion() {
+    let s1 = PassthroughSubject<Int, MyError>()
+    let s2 = PassthroughSubject<Int, MyError>()
+
+    s1.combineLatest(s2, s2)
+      .sinkAndPrintValueOrError("CombineLatest with finish")
+
+    s1.send(1)
+    s1.send(2)
+    s2.send(-2)
+    s1.send(3)
+    
+    debugPrint("Finish S1")
+    s1.send(completion: .finished)
+    
+    s2.send(-3)
+    s1.send(4)
+    s2.send(-4)
+    s2.send(-5)
+}
+
+//tryCombineLatestWithErrorCompletion()
+
+/**
+ #Zip
+    - accepts 2 or more upstream publishers and waits until a new value is sent from all the publishers before emitting a new tuple (so it doesn't use the latest value)
+  - it can merge publishers with different output types, but the failure type must match
+  - !!! the original publisher and every publisher that is combined with zip has to emit one value from the combined publishers to start emitting value, this also means that we might
+     miss emitted values from one publisher if it is received before all the combined publishers sent out at least one value
+  - if one of the combined publisher completed without error the the combined publisher will also finish after all emitted values were zipped
+  - if one of the publishers completed with an error the whole pipeline completes with an error and stops emitting values
+    #Usage
+    - synchronize results from multiple async calls
+ */
+
+
+func tryZipWithErrorCompletion() {
+    let s1 = PassthroughSubject<Int, MyError>()
+    let s2 = PassthroughSubject<Int, MyError>()
+
+    s1.zip(s2)
+      .sinkAndPrintValueOrError("Zip with error")
+
+    s1.send(1)
+    s1.send(2)
+    s2.send(-2)
+    s1.send(3)
+    
+    debugPrint("Fail S1")
+    s1.send(completion: .failure(.unknown))
+    
+    s2.send(-3)
+    s1.send(4)
+}
+
+// Note: even though we send the completion to s1 after it emitted 3 values, since s2 only emitted 2 the completion of the pipeline will only happen
+// when s2 also emits 3 values
+func tryZipWithFinishedCompletion() {
+    let s1 = PassthroughSubject<Int, MyError>()
+    let s2 = PassthroughSubject<Int, MyError>()
+
+    s1.zip(s2)
+      .sinkAndPrintValueOrError("Zip with finish")
+
+    s1.send(1)
+    s1.send(2)
+    s2.send(-1)
+    s1.send(3)
+    
+    debugPrint("Finish S1")
+    s1.send(completion: .finished)
+    
+    s2.send(-2)
+    s1.send(4)
+    s2.send(-3)
+//    s2.send(-4)
+//    s2.send(-5)
+}
+
+//tryZipWithErrorCompletion()
+//tryZipWithFinishedCompletion()
+
+
+/**
+ #Delay
+ - delays delivery of the output
+ */
+
+func tryDelay() {
+    let timer = Timer.publish(every: 1.0, on: .main, in: .common).autoconnect()
+    timer.sinkAndPrintValue("\(Date.now) Timer")
+         .store(in: &subscriptions)
+    
+    timer.delay(for: 2, scheduler: DispatchQueue.main)
+         .sinkAndPrintValue("\(Date.now) Delayed")
+         .store(in: &subscriptions)
+}
+//tryDelay()
+
+/**
+ #Debounce
+ - delays delivery of the output
+ - only publishes a value when x amount of time has passed from publishing the last value
+ - if the publisher completes before the time configured in the debounce elapses from the time the last value was emitted we will never receive this value
+  #Usage
+    - only process events if x amount of time has passed since the last emitting
+ */
+
+func tryDebounce() {
+    let typingHelloWorld: [(TimeInterval, String)] = [
+      (0.0, "H"),
+      (0.1, "He"),      // + 0.1
+      (0.2, "Hel"),     // + 0.1
+      (0.3, "Hell"),    // + 0.1
+      (0.5, "Hello"),   // + 0.2
+      (0.6, "Hello "), // + 0.1
+      (2.0, "Hello W"), // + 1.6
+      (2.1, "Hello Wo"),
+      (2.2, "Hello Wor"),
+      (2.4, "Hello Worl"), // won't be emmitted since the publisher completes before the delay has passed
+    ]
+
+    let delayedTyping = typingHelloWorld.publisher.flatMap { (delay, value) in
+        return Just(value).delay(for: .seconds(delay), scheduler: DispatchQueue.main).print()
+    }
+    
+    delayedTyping.debounce(for: .seconds(1), scheduler: DispatchQueue.main)
+            .sinkAndPrintValue("Debounce")
+            .store(in: &subscriptions)
+}
+
+//tryDebounce()
+
+
+/**
+ #Throttle
+ - similar to debounce in the fact that it waits to emit results
+ - debounce waits for a pause in values that it receives and emits the latest one after encountering a pause as long as the specified interval
+ - throttle waits for the specified interval then emits the first or last value that was emitted during that interval and it doesn't care about the pauses
+ */
+func tryThrottle() {
+    let typingHelloWorld: [(TimeInterval, String)] = [
+      (0.0, "H"),
+      (0.1, "He"),
+      (0.2, "Hel"),
+      (0.3, "Hell"),
+      (0.5, "Hello"),
+      (0.6, "Hello "),
+      (2.0, "Hello W"),
+      (2.1, "Hello Wo"),
+      (2.2, "Hello Wor"),
+      (2.4, "Hello Worl"),
+      (5.3, "Hello World"),
+    ]
+
+    let delayedTyping = delayedTyping(typing: typingHelloWorld, printName: "Type")
+    
+    delayedTyping.throttle(for: .seconds(1), scheduler: DispatchQueue.main, latest: true)
+            .sinkAndPrintValue("Throttle")
+            .store(in: &subscriptions)
+}
+
+//tryThrottle()
+
+
+/**
+ #TimeOut
+ - terminates the publisher if no values have been received under the specified timeout
+ */
+
+func tryTimeout() {
+    let typingHelloWorld: [(TimeInterval, String)] = [
+      (2.0, "H"),
+      (2.5, "He"),
+    ]
+    
+    let typingHolaAfter5Sec: [(TimeInterval, String)] = [
+      (5.0, "H"),
+      (5.5, "Ho"),
+    ]
+
+    let delayed2SecTyping = delayedTyping(typing: typingHelloWorld, printName: "2sec Type")
+    delayed2SecTyping.timeout(5, scheduler: DispatchQueue.main)
+                    .sinkAndPrintValue("Timeout")
+                    .store(in: &subscriptions)
+    
+    let delayed5SecTyping = delayedTyping(typing: typingHolaAfter5Sec, printName: "5sec Type")
+    
+    delayed5SecTyping.timeout(5, scheduler: DispatchQueue.main)
+                     .sinkAndPrintValue("Timeout")
+                     .store(in: &subscriptions)
+}
+tryTimeout()
