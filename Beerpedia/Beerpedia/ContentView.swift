@@ -6,11 +6,22 @@
 //
 
 import SwiftUI
+import UIKit
+
+struct UIKitContentView: UIViewControllerRepresentable {
+    typealias UIViewControllerType = BeersViewController
+    
+    func makeUIViewController(context: Context) -> UIViewControllerType {
+        .init(viewModel: BeersViewModel())
+    }
+    
+    func updateUIViewController(_ uiViewController: UIViewControllerType, context: Context) { }
+}
 
 struct ContentView: View {
     var body: some View {
         VStack {
-            UIKitBeersView()
+            UIKitContentView()
         }
         .padding()
     }

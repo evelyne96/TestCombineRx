@@ -10,14 +10,7 @@ import Foundation
 import SwiftUI
 import UIKit
 
-struct UIKitBeersView: UIViewControllerRepresentable {
-    typealias UIViewControllerType = BeersViewController
-    
-    func makeUIViewController(context: Context) -> UIViewControllerType { .init() }    
-    func updateUIViewController(_ uiViewController: UIViewControllerType, context: Context) { }
-}
-
-class BeersViewController: UIViewController {
+final class BeersViewController: UIViewController {
     typealias Cell = BeerCell
     typealias CellData = BeerViewModel
     
@@ -57,15 +50,14 @@ class BeersViewController: UIViewController {
     private lazy var activityIndicator: UIActivityIndicatorView = {
         let activity = UIActivityIndicatorView(style: .large)
         activity.translatesAutoresizingMaskIntoConstraints = false
-        activity.isHidden = true
         view.addSubview(activity)
         return activity
     }()
     
     private var subscriptions = Set<AnyCancellable>()
-    private var viewModel: BeerListViewModel
+    private(set) var viewModel: BeersViewModel
     
-    init(viewModel: BeerListViewModel = BeerListViewModel()) {
+    init(viewModel: BeersViewModel = BeersViewModel()) {
         self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
     }
@@ -77,8 +69,11 @@ class BeersViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        title = viewModel.title
+        view.backgroundColor = .systemBackground
         collectionView.register(Cell.self, forCellWithReuseIdentifier: Cell.reuseID)
         collectionView.dataSource = dataSource
+        collectionView.delegate = self
         
         NSLayoutConstraint.activate([
             collectionView.topAnchor.constraint(equalTo: view.topAnchor),
@@ -94,24 +89,25 @@ class BeersViewController: UIViewController {
         ])
         
         bindViewModel()
-    }
-    
-    override func viewDidAppear(_ animated: Bool) {
-        super.viewDidAppear(animated)
-        
-        self.viewModel.viewEvent.send(.onAppear)
+        viewModel.viewEvent.send(.onLoaded)
     }
     
     private func bindViewModel() {
-        viewModel.error.sink { [weak self] in
-            self?.errorLabel.text = $0
-        }.store(in: &subscriptions)
+        viewModel.error
+            .receive(on: DispatchQueue.main)
+            .assign(to: \.text, on: errorLabel)
+            .store(in: &subscriptions)
         
-        viewModel.isLoading.print("Loading").sink { [weak self] in
-            self?.activityIndicator.isHidden = !$0
-        }.store(in: &subscriptions)
+        viewModel.isLoading
+            .receive(on: DispatchQueue.main)
+            .sink{ [weak self] in
+                $0 ? self?.activityIndicator.startAnimating() : self?.activityIndicator.stopAnimating()
+            }
+            .store(in: &subscriptions)
         
-        viewModel.beers.sink { [weak self] in
+        viewModel.beers
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] in
             self?.refreshBeers($0)
         }.store(in: &subscriptions)
     }
@@ -121,5 +117,11 @@ class BeersViewController: UIViewController {
         snapshot.appendSections(Section.allCases)
         snapshot.appendItems(beers, toSection: .beers)
         dataSource.apply(snapshot)
+    }
+}
+
+extension BeersViewController: UICollectionViewDelegate {
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        viewModel.viewEvent.send(.didSelect(indexPath))
     }
 }

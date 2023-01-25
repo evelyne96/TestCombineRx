@@ -8,11 +8,12 @@
 import Combine
 import Foundation
 
-enum ViewEvent {
-    case onAppear
+enum ViewEvent: Equatable {
+    case onLoaded
+    case didSelect(_ indexPath: IndexPath)
 }
 
-final class BeerListViewModel {
+final class BeersViewModel {
     enum State {
         case loading(state: Bool)
         case error(description: String?)
@@ -20,6 +21,7 @@ final class BeerListViewModel {
     }
     
     private let apiClient: BeerAPIClient
+    private let coordinator: AppCoordinator
     private var subscriptions = Set<AnyCancellable>()
     
     private var state = PassthroughSubject<State, Never>()
@@ -28,20 +30,31 @@ final class BeerListViewModel {
     private(set) var isLoading = CurrentValueSubject<Bool, Never>(false)
     private(set) var error = CurrentValueSubject<String?, Never>(nil)
     private(set) var beers = CurrentValueSubject<[BeerViewModel], Never>([])
+    let title: String = "Beers"
     
-    init(apiClient: BeerAPIClient = BeerAPIClient()) {
+    init(apiClient: BeerAPIClient = BeerAPIClient(),
+         coordinator: AppCoordinator = AppCoordinator()) {
         self.apiClient = apiClient
+        self.coordinator = coordinator
         
+        createSubscriptions()
+    }
+    
+    private func createSubscriptions() {
         viewEvent
-            .filter { $0 == .onAppear }
+            .filter { $0 == .onLoaded }
             .flatMap { [weak self] _ in
-                self?.state.send(.loading(state: true))
-                return self?.apiClient.getBeers() ?? Fail(outputType: [Beer].self, failure: APIError.unknown).eraseToAnyPublisher()
+                guard let self else {
+                    return Just([Beer]()).setFailureType(to: APIError.self).eraseToAnyPublisher()
+                }
+                self.state.send(.loading(state: true))
+                return self.apiClient.getBeers()
             }
-            .receive(on: DispatchQueue.main)
+            .first()
             .sink(receiveCompletion: { [weak self] result in
                 switch result {
                 case .failure(let error):
+                    self?.state.send(.loading(state: false))
                     self?.state.send(.error(description: error.description))
                 case .finished:
                     break
@@ -62,18 +75,22 @@ final class BeerListViewModel {
                 self?.beers.send(beers)
             }
         }.store(in: &subscriptions)
+        
+        viewEvent.sink { [weak self] in
+            guard let self = self else { return }
+            switch $0 {
+            case .didSelect(let index):
+                let viewModel = self.beers.value[index.row]
+                self.coordinator.showDetailsFor(viewModel: viewModel)
+            default:
+                break
+            }
+        }.store(in: &subscriptions)
     }
 }
 
 extension Array where Element == Beer {
     func mapToBeerViewModel() -> [BeerViewModel] {
         map { BeerViewModel(beer: $0) }
-    }
-}
-
-extension Set where Element == AnyCancellable {
-    mutating func cancelAll() {
-        forEach { $0.cancel() }
-        removeAll()
     }
 }

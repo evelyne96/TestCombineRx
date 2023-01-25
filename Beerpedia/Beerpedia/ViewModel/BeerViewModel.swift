@@ -11,7 +11,6 @@ import UIKit
 
 final class BeerViewModel {
     private let apiClient: BeerAPIClient
-    private var subscriptions = Set<AnyCancellable>()
     private let beer: Beer
     
     private(set) var viewEvent = PassthroughSubject<ViewEvent, Never>()
@@ -19,37 +18,33 @@ final class BeerViewModel {
     private(set) var isDownloading = CurrentValueSubject<Bool, Never>(false)
     
     var name: String { beer.name }
+    var firstBrewed: String { beer.firstBrewed }
+    var contributedBy: String { beer.contributedBy ?? "" }
     
     init(beer: Beer,
          apiClient: BeerAPIClient = BeerAPIClient()) {
         self.apiClient = apiClient
         self.beer = beer
-        
-        viewEvent.sink { [weak self] event in
-            switch event {
-            case .onAppear:
-                self?.loadImage()
-            }
-        }.store(in: &subscriptions)
     }
     
-    private func loadImage() {
-        guard !isDownloading.value,
+    var imagePublisher: AnyPublisher<UIImage?, Never> {
+        guard image.value == nil,
               let imageURL = beer.imageUrl,
               let url = URL(string: imageURL) else {
-            return
+            return Just(nil).eraseToAnyPublisher()
         }
         
-        subscriptions.cancelAll()
         isDownloading.send(true)
-        apiClient.getImage(url: url)
-            .map { UIImage(data: $0) }
-            .replaceError(with: nil)
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] in
-                self?.image.send($0)
-            }
-            .store(in: &subscriptions)
+        
+        return apiClient.getImage(url: url)
+                        .map { [weak self] in
+                            let image = UIImage(data: $0)
+                            self?.image.send(image)
+                            self?.isDownloading.send(false)
+                            return image
+                        }
+                        .replaceError(with: nil)
+                        .eraseToAnyPublisher()
     }
 }
 

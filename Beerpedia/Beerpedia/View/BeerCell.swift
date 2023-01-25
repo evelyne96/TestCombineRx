@@ -21,7 +21,21 @@ final class BeerCell: UICollectionViewCell, ReusableView {
         return imageView
     }()
     
-    private lazy var label: UILabel = {
+    private lazy var name: UILabel = {
+        let label = UILabel()
+        label.numberOfLines = 0
+        label.font = .preferredFont(forTextStyle: .title1)
+        return label
+    }()
+    
+    private lazy var firstBrewed: UILabel = {
+        let label = UILabel()
+        label.numberOfLines = 0
+        label.font = .preferredFont(forTextStyle: .title1)
+        return label
+    }()
+    
+    private lazy var contributed: UILabel = {
         let label = UILabel()
         label.numberOfLines = 0
         label.font = .preferredFont(forTextStyle: .title1)
@@ -33,7 +47,11 @@ final class BeerCell: UICollectionViewCell, ReusableView {
     override init(frame: CGRect) {
         super.init(frame: frame)
         
-        let contentStack = UIStackView(arrangedSubviews: [imageView, label])
+        let labelStack = UIStackView(arrangedSubviews: [name, firstBrewed, contributed])
+        labelStack.axis  = .vertical
+        labelStack.alignment = .leading
+        
+        let contentStack = UIStackView(arrangedSubviews: [imageView, labelStack])
         contentStack.axis  = .horizontal
         contentStack.alignment = .center
         contentStack.spacing = UIConstants.spacing
@@ -59,21 +77,26 @@ final class BeerCell: UICollectionViewCell, ReusableView {
     
     override func prepareForReuse() {
         super.prepareForReuse()
-        subscriptions.cancelAll()
+        subscriptions.removeAll()
         
         imageView.image = nil
-        label.text = nil
+        name.text = nil
+        firstBrewed.text = nil
+        contributed.text = nil
     }
     
     func configure(with viewModel: BeerViewModel) {
-        imageView.image = viewModel.image.value
-        label.text = viewModel.name
+        name.text = viewModel.name
+        firstBrewed.text = viewModel.firstBrewed
+        contributed.text = viewModel.contributedBy
         
+        // start image loading
+        viewModel.imagePublisher.sink { _ in }.store(in: &subscriptions)
+        
+        // setup received data
         viewModel.image
-            .sink { [weak self] in
-                self?.imageView.image = $0
-            }.store(in: &subscriptions)
-        
-        viewModel.viewEvent.send(.onAppear)
+            .receive(on: DispatchQueue.main)
+            .assign(to: \.image, on: imageView)
+            .store(in: &subscriptions)
     }
 }
