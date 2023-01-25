@@ -808,4 +808,35 @@ func trySwitchToLatest() {
     s1.send(2)
 }
 
-trySwitchToLatest()
+//trySwitchToLatest()
+
+
+/**
+ #Merge
+    - accepts 2 upstream publishers and mixes the elements received from both as they are received.
+  - if the two publishers are sending the values at the same time they will be merged in the same order as the publishers were defined in.
+  - we also have merge3, merge4...merge8
+  - the output and input types of the merge publishers must match.
+  - If one of the publishers finishes normally the merged publisher continues receiving values from the unfinished one, if one of the finishes with a failure we don't receive
+    any more updates from the unfinished one either
+ */
+
+func tryMerge() {
+    let s1 = PassthroughSubject<Int, MyError>()
+    let s2 = PassthroughSubject<Int, MyError>()
+
+    s1.merge(with: s2)
+      .sinkAndPrintValueOrError("Merge")
+
+    s1.send(1)
+    s1.send(2)
+    s2.send(-1)
+    s1.send(3)
+    
+    s1.send(completion: .failure(.unknown))
+    
+    s1.send(4)
+    s2.send(-5)
+}
+
+tryMerge()
