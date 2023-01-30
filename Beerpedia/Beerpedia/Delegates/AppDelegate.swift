@@ -9,7 +9,6 @@
 // https://betterprogramming.pub/an-introduction-to-coordinator-pattern-in-swiftui-38e5b02f031f
 import UIKit
 
-@main
 class AppDelegate: UIResponder, UIApplicationDelegate {
     func application(_ application: UIApplication,
                      didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {

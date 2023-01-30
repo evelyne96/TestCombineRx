@@ -23,7 +23,15 @@ enum BeerEndpoints: CustomStringConvertible {
     }
 }
 
-final class BeerAPIClient: APIClient {
+protocol BeerAPI: APIClient {
+    var urlSession: URLSession { get }
+    
+    func getBeers() -> AnyPublisher<[Beer], APIError>
+    func getImage(url: URL) -> AnyPublisher<Data, APIError>
+    func getBeer(id: Int) -> AnyPublisher<Beer, APIError>
+}
+
+final class BeerAPIClient: BeerAPI {
     let urlSession: URLSession
     init(urlSession: URLSession = .shared) {
         self.urlSession = urlSession

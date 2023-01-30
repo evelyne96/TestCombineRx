@@ -20,8 +20,8 @@ final class BeersViewModel {
         case dataLoaded(beers: [BeerViewModel])
     }
     
-    private let apiClient: BeerAPIClient
-    private let coordinator: AppCoordinator
+    private let apiClient: BeerAPI
+    private let coordinator: BeerCoordinator
     private var subscriptions = Set<AnyCancellable>()
     
     private var state = PassthroughSubject<State, Never>()
@@ -32,8 +32,8 @@ final class BeersViewModel {
     private(set) var beers = CurrentValueSubject<[BeerViewModel], Never>([])
     let title: String = "Beers"
     
-    init(apiClient: BeerAPIClient = BeerAPIClient(),
-         coordinator: AppCoordinator = AppCoordinator()) {
+    init(apiClient: BeerAPI = BeerAPIClient(),
+         coordinator: BeerCoordinator = AppCoordinator()) {
         self.apiClient = apiClient
         self.coordinator = coordinator
         
