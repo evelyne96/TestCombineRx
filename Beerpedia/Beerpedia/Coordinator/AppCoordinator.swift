@@ -25,7 +25,7 @@ final class AppCoordinator: Coordinator {
 }
 
 // Beer View Coordinators
-extension AppCoordinator {
+extension AppCoordinator: BeerCoordinator {
     func showDetailsFor(viewModel: BeerViewModel) {
         let vc = BeerDetailsViewController(viewModel: viewModel)
         navigationController.pushViewController(vc, animated: true)

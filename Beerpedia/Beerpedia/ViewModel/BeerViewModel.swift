@@ -10,7 +10,7 @@ import Foundation
 import UIKit
 
 final class BeerViewModel {
-    private let apiClient: BeerAPIClient
+    private let apiClient: BeerAPI
     private let beer: Beer
     
     private(set) var viewEvent = PassthroughSubject<ViewEvent, Never>()
@@ -22,7 +22,7 @@ final class BeerViewModel {
     var contributedBy: String { beer.contributedBy ?? "" }
     
     init(beer: Beer,
-         apiClient: BeerAPIClient = BeerAPIClient()) {
+         apiClient: BeerAPI = BeerAPIClient()) {
         self.apiClient = apiClient
         self.beer = beer
     }

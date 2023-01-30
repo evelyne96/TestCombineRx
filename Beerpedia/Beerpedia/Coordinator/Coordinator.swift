@@ -17,3 +17,6 @@ public protocol Coordinator : AnyObject {
     func start()
 }
 
+protocol BeerCoordinator : AnyObject {
+    func showDetailsFor(viewModel: BeerViewModel)
+}
