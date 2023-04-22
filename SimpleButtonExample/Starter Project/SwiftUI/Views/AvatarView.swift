@@ -10,30 +10,32 @@ import SwiftUI
 
 struct AvatarView: View {
     var body: some View {
-        ZStack {
-            Color(.systemMint)
-                .ignoresSafeArea()
-            
-            VStack {
-                CircleImage(image: "cato")
+            ZStack {
+                Color(.systemMint)
+                    .ignoresSafeArea()
                 
-                Text("Robin")
-                    .foregroundColor(.white)
-                    .font(.largeTitle)
-                    .bold()
-                
-                Divider()
-                
-                InfoView(systemImageName: "birthday.cake.fill",
-                         text: "August 2019")
-                
-                InfoView(systemImageName: "fork.knife",
-                         text: "Acana")
-                
-                InfoView(systemImageName: "figure.2.and.child.holdinghands",
-                         text: "Zoli & Eve")
+                ScrollView {
+                    VStack {
+                        CircleImage(image: "cato")
+                        
+                        Text("Robin")
+                            .foregroundColor(.white)
+                            .font(.largeTitle)
+                            .bold()
+                        
+                        Divider()
+                        
+                        InfoView(systemImageName: "birthday.cake.fill",
+                                 text: "August 2019")
+                        
+                        InfoView(systemImageName: "fork.knife",
+                                 text: "Acana")
+                        
+                        InfoView(systemImageName: "figure.2.and.child.holdinghands",
+                                 text: "Zoli & Eve")
+                    }.padding(10)
+                }
             }
-        }
     }
 }
 

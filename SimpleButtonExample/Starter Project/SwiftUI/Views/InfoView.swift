@@ -21,6 +21,7 @@ struct InfoView: View {
                         .foregroundColor(.indigo)
                     Text(text)
                         .font(.system(size: 15))
+                        .foregroundColor(.black)
                         .bold()
                     Spacer()
                 }.padding(25)
