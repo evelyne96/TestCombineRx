@@ -8,11 +8,14 @@
 
 /* Begin PBXBuildFile section */
 		34268DC4C4AB671F7F86AE3E /* Pods_Starter_Project_Starter_ProjectUITests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F6E7F461504B038E87C0B4A3 /* Pods_Starter_Project_Starter_ProjectUITests.framework */; };
+		8A46616329F41ADB00389532 /* AvatarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A46616229F41ADB00389532 /* AvatarView.swift */; };
+		8A46616529F41E9700389532 /* InfoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A46616429F41E9700389532 /* InfoView.swift */; };
 		8A4CB87A297549BB003B4E84 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A4CB879297549BB003B4E84 /* ContentView.swift */; };
 		8A4CB87C297549CC003B4E84 /* Starter_ProjectApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A4CB87B297549CC003B4E84 /* Starter_ProjectApp.swift */; };
 		8AA5840C2971B0BF00716F72 /* TestViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AA5840B2971B0BF00716F72 /* TestViewController.swift */; };
 		8AA584102971B22000716F72 /* TestViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AA5840F2971B22000716F72 /* TestViewModel.swift */; };
 		8AA584172971D37000716F72 /* CustomPublishers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AA584162971D37000716F72 /* CustomPublishers.swift */; };
+		8AB3B00329F4201B00C35011 /* CircleImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AB3B00229F4201B00C35011 /* CircleImage.swift */; };
 		8AE9032C296EDA2D0085213B /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8AE9032B296EDA2D0085213B /* Assets.xcassets */; };
 		8AE90330296EDA2D0085213B /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8AE9032F296EDA2D0085213B /* Preview Assets.xcassets */; };
 		8AE9033A296EDA2D0085213B /* Starter_ProjectTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AE90339296EDA2D0085213B /* Starter_ProjectTests.swift */; };
@@ -48,11 +51,14 @@
 		2FC0EB65E419A66F54187E2F /* Pods_Starter_Project.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Starter_Project.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		45D95FFE8469B532FEB22265 /* Pods-Starter Project-Starter ProjectUITests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Starter Project-Starter ProjectUITests.debug.xcconfig"; path = "Target Support Files/Pods-Starter Project-Starter ProjectUITests/Pods-Starter Project-Starter ProjectUITests.debug.xcconfig"; sourceTree = "<group>"; };
 		62C75BCFFC978F88C386A778 /* Pods-Starter ProjectTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Starter ProjectTests.release.xcconfig"; path = "Target Support Files/Pods-Starter ProjectTests/Pods-Starter ProjectTests.release.xcconfig"; sourceTree = "<group>"; };
+		8A46616229F41ADB00389532 /* AvatarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvatarView.swift; sourceTree = "<group>"; };
+		8A46616429F41E9700389532 /* InfoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InfoView.swift; sourceTree = "<group>"; };
 		8A4CB879297549BB003B4E84 /* ContentView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		8A4CB87B297549CC003B4E84 /* Starter_ProjectApp.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Starter_ProjectApp.swift; sourceTree = "<group>"; };
 		8AA5840B2971B0BF00716F72 /* TestViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestViewController.swift; sourceTree = "<group>"; };
 		8AA5840F2971B22000716F72 /* TestViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestViewModel.swift; sourceTree = "<group>"; };
 		8AA584162971D37000716F72 /* CustomPublishers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomPublishers.swift; sourceTree = "<group>"; };
+		8AB3B00229F4201B00C35011 /* CircleImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CircleImage.swift; sourceTree = "<group>"; };
 		8AE90324296EDA2C0085213B /* Starter Project.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Starter Project.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		8AE9032B296EDA2D0085213B /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		8AE9032D296EDA2D0085213B /* Starter_Project.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Starter_Project.entitlements; sourceTree = "<group>"; };
@@ -99,6 +105,24 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		8A46616029F4103600389532 /* SwiftUI */ = {
+			isa = PBXGroup;
+			children = (
+				8A46616129F4107300389532 /* Views */,
+			);
+			path = SwiftUI;
+			sourceTree = "<group>";
+		};
+		8A46616129F4107300389532 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				8A46616229F41ADB00389532 /* AvatarView.swift */,
+				8A46616429F41E9700389532 /* InfoView.swift */,
+				8AB3B00229F4201B00C35011 /* CircleImage.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
 		8AA5840D2971B0C500716F72 /* View */ = {
 			isa = PBXGroup;
 			children = (
@@ -112,8 +136,6 @@
 		8AA5840E2971B11E00716F72 /* Test */ = {
 			isa = PBXGroup;
 			children = (
-				8A4CB87B297549CC003B4E84 /* Starter_ProjectApp.swift */,
-				8A4CB879297549BB003B4E84 /* ContentView.swift */,
 				8AA584112971B22600716F72 /* ViewModel */,
 				8AA5840D2971B0C500716F72 /* View */,
 				8AA584152971D34C00716F72 /* Helper */,
@@ -163,6 +185,9 @@
 		8AE90326296EDA2C0085213B /* Starter Project */ = {
 			isa = PBXGroup;
 			children = (
+				8A4CB87B297549CC003B4E84 /* Starter_ProjectApp.swift */,
+				8A4CB879297549BB003B4E84 /* ContentView.swift */,
+				8A46616029F4103600389532 /* SwiftUI */,
 				8AA5840E2971B11E00716F72 /* Test */,
 				8AE9032B296EDA2D0085213B /* Assets.xcassets */,
 				8AE9032D296EDA2D0085213B /* Starter_Project.entitlements */,
@@ -464,6 +489,9 @@
 				8AA584172971D37000716F72 /* CustomPublishers.swift in Sources */,
 				8AFBAA2329DDA3AD009EE19A /* RxTestViewController.swift in Sources */,
 				8A4CB87C297549CC003B4E84 /* Starter_ProjectApp.swift in Sources */,
+				8A46616329F41ADB00389532 /* AvatarView.swift in Sources */,
+				8AB3B00329F4201B00C35011 /* CircleImage.swift in Sources */,
+				8A46616529F41E9700389532 /* InfoView.swift in Sources */,
 				8AFBAA2729DDA5DE009EE19A /* UIKitTestView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
