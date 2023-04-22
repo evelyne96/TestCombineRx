@@ -1,18 +1,18 @@
 //
-//  TestViewController.swift
+//  RxTestViewController.swift
 //  Starter Project
 //
-//  Created by Evelyne Suto on 13.01.2023.
+//  Created by Evelyne Suto on 05.04.2023.
 //
 
 import Foundation
-import Combine
-import SwiftUI
+import RxSwift
+import RxCocoa
 import UIKit
 
-class TestViewController: UIViewController {
-    private let viewModel = TestViewModel()
-    private var cancellables = Set<AnyCancellable>()
+class RxTestViewController: UIViewController {
+    private let viewModel = RxTestViewModel()
+    private var disposeBag = DisposeBag()
     private lazy var plusButton: UIButton = {
         let button = UIButton()
         button.translatesAutoresizingMaskIntoConstraints = false
@@ -63,18 +63,19 @@ class TestViewController: UIViewController {
     }
     
     private func bindViews() {
-        plusButton.tapPublisher.print("Plus").sink { [weak self] _ in
+        plusButton.rx.tap.subscribe { [weak self] _ in
             self?.viewModel.increase()
-        }.store(in: &cancellables)
+        }
+        .disposed(by: disposeBag)
         
-        minusButton.tapPublisher.print("Minus").sink { [weak self] _ in
+        minusButton.rx.tap.subscribe { [weak self] _ in
             self?.viewModel.decrease()
-        }.store(in: &cancellables)
+        }
+        .disposed(by: disposeBag)
         
-        viewModel.currentValue
+        viewModel.subject
             .map { "\($0)" }
-            .sink { [weak self] text in
-            self?.currentValueLabel.text = text
-        }.store(in: &cancellables)
+            .bind(to: currentValueLabel.rx.text)
+            .disposed(by: disposeBag)
     }
 }
